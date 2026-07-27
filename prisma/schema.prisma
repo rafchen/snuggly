@@ -1,0 +1,318 @@
+// Cracked — Track A persistence layer.
+//
+// The shapes here back src/lib/types.ts. That file is the contract; this file is
+// its storage. Where a TS type uses an array or a nested object, SQLite stores a
+// JSON string and src/lib/store.ts owns the (de)serialization — the JSON columns
+// are documented with the exact TS type they hold.
+//
+// Two invariants are encoded structurally rather than by convention:
+//   1. Mastery.articulation is nullable. Null is not zero. Nothing in this schema
+//      defaults it, and store.ts never averages it as one.
+//   2. MasteryDelta.appliedAt is nullable and is the single-writer queue: every
+//      agent enqueues, only curriculum-planner (MASTERY_WRITER) applies.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Learner
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Learner {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  /// Current PhaseNumber (0..5). Advanced only by curriculum-planner gate checks.
+  phase     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mastery        Mastery[]
+  deltas         MasteryDelta[]
+  drillSessions  DrillSession[]
+  drillAttempts  DrillAttempt[]
+  ladderSessions LadderSession[]
+  failures       FailureRecord[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Skill DAG (mirror of taxonomy.ts SKILL_DAG; seeded, not authored here)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model SkillNode {
+  /// Node id, e.g. "sliding_window_variable". Matches SkillNodeDef.id.
+  id        String  @id
+  /// PhaseNumber 0..5.
+  phase     Int
+  /// Mechanism, or null for Phase 0 fluency nodes that carry no mechanism.
+  mechanism String?
+
+  /// Edges where this node is the dependent (i.e. its own prerequisites).
+  prereqEdges SkillEdge[] @relation("NodePrereqs")
+  /// Edges where this node is the prerequisite (i.e. what it unlocks).
+  unlockEdges SkillEdge[] @relation("PrereqDependents")
+
+  @@index([phase])
+}
+
+model SkillEdge {
+  id       String @id @default(cuid())
+  nodeId   String
+  prereqId String
+
+  node   SkillNode @relation("NodePrereqs", fields: [nodeId], references: [id], onDelete: Cascade)
+  prereq SkillNode @relation("PrereqDependents", fields: [prereqId], references: [id], onDelete: Cascade)
+
+  @@unique([nodeId, prereqId])
+  @@index([prereqId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mastery
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// One row per (learner, node). Stored values are as-of `lastSeen`; callers never
+/// read these raw — store.ts decays them to now on every read.
+model Mastery {
+  id        String @id @default(cuid())
+  learnerId String
+  /// SkillNode id. Deliberately NOT a foreign key: deltas may land on a node
+  /// before the DAG mirror is seeded, and a missing row must not fail a write.
+  node      String
+
+  recognition    Float  @default(0)
+  derivation     Float  @default(0)
+  implementation Float  @default(0)
+  /// NULLABLE BY CONTRACT. Phase-5 / interview-sim are the only writers.
+  /// Null means "never measured" — it is not zero and is never averaged as zero.
+  articulation   Float?
+
+  /// Multiplier on the nominal HALF_LIFE_DAYS. 1.0 = spec-nominal decay.
+  /// Reserved for per-learner calibration; the default decay path ignores it.
+  decayRate Float    @default(1)
+  lastSeen  DateTime @default(now())
+
+  /// JSON: Partial<Record<FailureCode, number>>, e.g. {"F3":1,"F4":3}
+  failureCodes String @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@unique([learnerId, node])
+  @@index([learnerId])
+  @@index([node])
+}
+
+/// The single-writer queue. Any agent may append a row (appliedAt = null).
+/// Only MASTERY_WRITER ('curriculum-planner') may fold rows into Mastery.
+model MasteryDelta {
+  id        String @id @default(cuid())
+  learnerId String
+  node      String
+  /// SkillDimension: recognition | derivation | implementation | articulation
+  dimension String
+  /// The raw observation in [0,1]. EMA against the decayed prior happens on apply.
+  observed  Float
+  /// AgentName that produced the observation.
+  source    String
+
+  observedAt DateTime  @default(now())
+  /// Null = pending. Set when curriculum-planner folds it into Mastery.
+  appliedAt  DateTime?
+
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@index([learnerId, appliedAt])
+  @@index([learnerId, node])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Content
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Mirrors ProblemContent. Authored by content-forge (Track B), read-only here.
+model Problem {
+  /// ProblemContent.problemId
+  id             String  @id
+  sourceRef      String?
+  title          String
+  /// 100% original prose. Never third-party statement text.
+  statement      String
+  primaryPattern String
+  /// JSON: Mechanism[]
+  secondary      String  @default("[]")
+  redundancy     String
+  /// PhaseNumber 0..5
+  phase          Int
+  /// JSON: string[] of SkillNode ids
+  prerequisites  String  @default("[]")
+
+  /// JSON: CanonicalLadder { frame, brute, bottleneck, lift, invariant, verify }
+  canonicalLadder String
+  /// JSON: string[] — exactly 7 entries, levels 0..6
+  hints           String @default("[]")
+  /// JSON: Distractor[] — at least 2
+  distractors     String @default("[]")
+
+  /// DisguiseLevel 0..3
+  disguiseLevel         Int     @default(0)
+  misleadingFingerprint String?
+  /// JSON: string[]
+  edgeCases             String  @default("[]")
+  /// JSON: { disguiseLevel: DisguiseLevel; statement: string }[]
+  drillVariants         String  @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([primaryPattern])
+  @@index([phase])
+  @@index([disguiseLevel])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Recognition drill
+// ─────────────────────────────────────────────────────────────────────────────
+
+model DrillSession {
+  id          String    @id @default(cuid())
+  learnerId   String
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  /// JSON: DrillSessionResult, written when the session closes.
+  result      String?
+
+  learner  Learner        @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  attempts DrillAttempt[]
+
+  @@index([learnerId])
+}
+
+model DrillAttempt {
+  id        String  @id @default(cuid())
+  learnerId String
+  /// Nullable: DataStore.recordDrillAttempt takes no session, so standalone
+  /// attempts are legal and are attributed to the learner only.
+  sessionId String?
+  /// Problem id. Not a foreign key — an attempt must be recordable against a
+  /// problem the content library has not been seeded with yet.
+  problemId String
+
+  /// DrillAnswer.mechanism — null when the learner named no mechanism.
+  answerMechanism  String?
+  /// DrillAnswer.redundancy — free text, graded against the canonical redundancy.
+  answerRedundancy String  @default("")
+
+  mechanismCorrect  Boolean
+  redundancyCorrect Boolean
+  /// DrillScore: 1.0 | 0.8 | 0.5 | 0.3 | 0.0
+  score             Float
+  elapsedSec        Int
+  timedOut          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  learner Learner       @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  session DrillSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([learnerId, problemId])
+  @@index([sessionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The Ladder
+// ─────────────────────────────────────────────────────────────────────────────
+
+model LadderSession {
+  id        String @id @default(cuid())
+  learnerId String
+  /// Problem id. Not a foreign key, for the same reason as DrillAttempt.problemId.
+  problemId String
+
+  /// RungNumber 1..6
+  currentRung             Int       @default(1)
+  difficultyMiscalibrated Boolean   @default(false)
+  startedAt               DateTime  @default(now())
+  completedAt             DateTime?
+
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  commits LadderCommit[]
+  hints   HintRelease[]
+
+  @@index([learnerId, problemId])
+}
+
+/// A falsifiable hypothesis. The Commit Rule means a HintRelease at rung R is only
+/// legal once a LadderCommit exists at rung R — enforced in the service layer.
+model LadderCommit {
+  id                String   @id @default(cuid())
+  sessionId         String
+  /// RungNumber 1..6
+  rung              Int
+  text              String
+  correct           Boolean
+  hintsUsedAtCommit Int      @default(0)
+  committedAt       DateTime @default(now())
+
+  session LadderSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, rung])
+}
+
+model HintRelease {
+  id         String   @id @default(cuid())
+  sessionId  String
+  /// RungNumber 1..6
+  rung       Int
+  /// HintLevel 0..6. Level 6 requires a non-null reason.
+  level      Int
+  text       String
+  reason     String?
+  releasedAt DateTime @default(now())
+
+  session LadderSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, rung])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Failure taxonomy
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Mirrors FailureAnalysis. Feeds the frustration circuit-breaker: three
+/// consecutive F1/F2 on one node means the prerequisite is missing.
+model FailureRecord {
+  id        String  @id @default(cuid())
+  learnerId String
+  node      String
+  sessionId String?
+  problemId String?
+
+  /// FailureCode F1..F6
+  primaryCode     String
+  /// JSON: FailureCode[]
+  secondaryCodes  String  @default("[]")
+  /// Must cite the commit log — never a code without evidence.
+  evidence        String
+  prerequisiteGap Boolean @default(false)
+  /// JSON: { drillType, target, reps, sessions }
+  prescription    String  @default("{}")
+  learnerMessage  String  @default("")
+  /// F5Subclass, when primaryCode is F5.
+  f5Subclass      String?
+
+  createdAt DateTime @default(now())
+
+  learner Learner @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@index([learnerId, node])
+  @@index([learnerId, createdAt])
+}
