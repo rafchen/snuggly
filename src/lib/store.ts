@@ -525,6 +525,31 @@ export class PrismaDataStore implements DataStore {
     return toLadderSessionState(row)
   }
 
+  /**
+   * Move to the next rung. Called only after a correct commit — the Ladder is
+   * climbed in order, and rung 2 is never skipped even when the learner insists
+   * they already know the fast solution.
+   */
+  async advanceRung(sessionId: string): Promise<LadderSessionState | null> {
+    const session = await this.db.ladderSession.findUnique({ where: { id: sessionId } })
+    if (!session) return null
+    if (session.currentRung >= 6) return this.getLadderSession(sessionId)
+    const row = await this.db.ladderSession.update({
+      where: { id: sessionId },
+      data: { currentRung: session.currentRung + 1 },
+      include: LADDER_INCLUDE,
+    })
+    return toLadderSessionState(row)
+  }
+
+  /** Hint level 4 on a single rung means the problem sat above the learner's level. */
+  async flagMiscalibrated(sessionId: string): Promise<void> {
+    await this.db.ladderSession.update({
+      where: { id: sessionId },
+      data: { difficultyMiscalibrated: true },
+    })
+  }
+
   // ── Drills ─────────────────────────────────────────────────────────────────
 
   async recordDrillAttempt(learnerId: string, attempt: DrillAttempt, sessionId?: string): Promise<void> {

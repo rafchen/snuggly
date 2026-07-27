@@ -132,7 +132,7 @@ export async function logHypothesis(sessionId: string, text: string): Promise<Co
     committedAt: new Date(),
   }
   await store.logCommit(sessionId, commit)
-  if (commit.correct) uiStore.advanceRung(sessionId)
+  if (commit.correct) await uiStore.advanceRung(sessionId)
   return view(sessionId)
 }
 
@@ -166,7 +166,7 @@ export async function releaseHint(sessionId: string, reason: string | null): Pro
   await store.logHint(sessionId, hint)
 
   const atRung = session.hints.filter((h) => h.rung === session.currentRung).length + 1
-  if (atRung >= MISCALIBRATION_HINTS_PER_RUNG) uiStore.flagMiscalibrated(sessionId)
+  if (atRung >= MISCALIBRATION_HINTS_PER_RUNG) await uiStore.flagMiscalibrated(sessionId)
 
   return view(sessionId)
 }

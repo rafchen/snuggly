@@ -25,7 +25,6 @@
  * `issuedAtMs` field: wherever it is persisted, the rule stays "the server wrote it".
  */
 
-import { InterleavingViolation } from '@/lib/types'
 import type {
   DrillAnswer,
   DrillAttempt,
@@ -38,7 +37,8 @@ import type {
 import { DRILL_TIME_CAP_SEC } from '@/lib/types'
 import { MOCK_LEARNER_ID, store } from '@/lib/ui-store'
 import { MECHANISM_LABEL, REDUNDANCY_LABEL } from '@/components/labels'
-import { gradeRedundancyText, scoreDrill } from './grading'
+import { drillScore, gradeRedundancyOffline } from '@/lib/scoring'
+import { selectDrillItems } from '@/lib/interleave'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Wire shapes
@@ -110,6 +110,9 @@ interface DrillRun {
   confusions: Array<[Mechanism, Mechanism]>
 }
 
+/** A warm-up is ~10 interleaved items (curriculum.md: 5-minute warm-up block). */
+const DRILL_SET_SIZE = 10
+
 const runs = new Map<string, DrillRun>()
 let counter = 0
 
@@ -120,28 +123,12 @@ const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(++co
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Interleave: never two consecutive items on the same mechanism. Blocked drilling
- * gives the recognition step away for free, and recognition is the whole point.
- * The check is an assertion against the contract's own error type, not a filter.
- *
- * INTEGRATION: replaceable by `selectDrillItems` / `assertInterleaved` in
- * `src/lib/interleave.ts`, which also handles due reviews and planted fingerprints.
- * Only the selection changes — issuance and timing stay here.
+ * Selection is delegated to the real engine, which additionally weights
+ * confusable pairs and due reviews and plants misleading fingerprints. It throws
+ * InterleavingViolation rather than degrading into a blocked run.
  */
-function interleave(problems: ProblemContent[]): ProblemContent[] {
-  const pool = [...problems]
-  const out: ProblemContent[] = []
-  while (pool.length > 0) {
-    const prev = out[out.length - 1]
-    const idx = pool.findIndex((p) => !prev || p.primaryPattern !== prev.primaryPattern)
-    out.push(...pool.splice(idx === -1 ? 0 : idx, 1))
-  }
-  out.forEach((p, i) => {
-    if (i > 0 && out[i - 1].primaryPattern === p.primaryPattern) {
-      throw new InterleavingViolation(p.primaryPattern, i)
-    }
-  })
-  return out
+function selectItems(problems: ProblemContent[], count: number): DrillItem[] {
+  return selectDrillItems({ pool: problems, count: Math.min(count, problems.length) })
 }
 
 function toDrillItem(p: ProblemContent): DrillItem {
@@ -184,11 +171,12 @@ export async function startRun(learnerId: string = MOCK_LEARNER_ID): Promise<{
   runId: string
   payload: DrillItemPayload
 }> {
-  const problems = interleave(await store.listProblems())
+  const all = await store.listProblems()
+  const selected = selectItems(all, DRILL_SET_SIZE)
   const run: DrillRun = {
     runId: nextId('run'),
     learnerId,
-    problemIds: problems.map((p) => p.problemId),
+    problemIds: selected.map((i) => i.problemId),
     cursor: 0,
     issued: new Map(),
     attempts: [],
@@ -259,8 +247,9 @@ async function settle(
   if (!problem) throw new Error(`Missing problem ${issued.problemId}`)
 
   const mechanismCorrect = !timedOut && answer.mechanism === problem.primaryPattern
-  const redundancyCorrect = !timedOut && gradeRedundancyText(answer.redundancy, problem.redundancy)
-  const score = scoreDrill({ mechanismCorrect, redundancyCorrect, elapsedSec, timedOut })
+  const redundancyCorrect =
+    !timedOut && gradeRedundancyOffline(answer.redundancy, problem.redundancy)
+  const score = drillScore({ mechanismCorrect, redundancyCorrect, elapsedSec })
 
   const attempt: DrillAttempt = {
     problemId: problem.problemId,

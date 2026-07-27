@@ -9,7 +9,7 @@
  */
 
 import type { Mechanism, ProblemContent, RungNumber } from '@/lib/types'
-import { gradeRedundancyText } from '../drill/grading'
+import { gradeRedundancyOffline } from '@/lib/scoring'
 
 const COMPLEXITY = /(o\s*\(|n\^?2|n²|quadratic|exponential|factorial|linear|log\b|2\^n)/i
 const FRAMING = /(input|output|return|constraint|\bn\b|size|up to|at most)/i
@@ -36,7 +36,7 @@ export function gradeCommit(rung: RungNumber, text: string, problem: ProblemCont
       return COMPLEXITY.test(t)
     case 3:
       // The hinge. Graded against the canonical redundancy, not against vibes.
-      return gradeRedundancyText(t, problem.redundancy)
+      return gradeRedundancyOffline(t, problem.redundancy)
     case 4:
       return namesMechanism(t, problem.primaryPattern)
     case 5:

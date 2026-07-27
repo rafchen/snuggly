@@ -25,6 +25,7 @@ import type {
   SessionPlan,
 } from './types'
 import { MASTERY_WRITER } from './types'
+import { store as prismaStore } from './store'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Problem library
@@ -707,16 +708,20 @@ class UiMockStore implements DataStore {
 }
 
 /**
- * The seam. Every loader imports this as a `DataStore`; integration replaces the
- * right-hand side with Track A's implementation and nothing else changes.
+ * The seam, now closed. `store` is Track A's Prisma-backed implementation, so
+ * the screens read the same rows the agents and the seed script write, and
+ * mastery survives a restart with decay applied on read.
+ *
+ * UiMockStore is kept — not dead weight — because the invariant tests and any
+ * offline/demo run need a DataStore with no database behind it.
  */
-export const uiStore = new UiMockStore()
-export const store: DataStore = uiStore
+export const store: DataStore = prismaStore
+export const uiStore = prismaStore
 
-export const MOCK_LEARNER_ID = 'learner-1'
+export const MOCK_LEARNER_ID = 'demo-learner'
 
 /** The problem the coach screen walks. Chosen for its deep hint ladder. */
-export const COACH_PROBLEM_ID = 'next-taller-building'
+export const COACH_PROBLEM_ID = 'largest-rectangle-in-a-skyline'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Session-summary fixtures
