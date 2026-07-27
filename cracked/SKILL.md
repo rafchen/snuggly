@@ -13,7 +13,7 @@ A system for turning "I can solve problems I've seen" into "I can derive solutio
 
 This is not a slogan, it is the entire curriculum. Sorting is "don't re-compare pairs you've already ordered." Dynamic programming is "don't recompute subproblems." Sliding window is "don't re-sum a range that mostly overlaps the last one." Hash maps are "don't re-scan to answer *have I seen this*."
 
-There are roughly a dozen kinds of redundancy and about twenty mechanisms that eliminate them. The mapping is close to deterministic. A learner who owns that mapping does not need to have seen a problem before — they need to identify what work is being wasted, then name the tool that stops the waste.
+There are eighteen kinds of redundancy and twenty-four mechanisms that eliminate them. The mapping is close to deterministic. A learner who owns that mapping does not need to have seen a problem before — they need to identify what work is being wasted, then name the tool that stops the waste.
 
 Everything in this system exists to install that one reflex.
 

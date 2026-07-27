@@ -40,7 +40,7 @@ Rung 3 → 4 of the Ladder. The learner names the wasted work; this table names 
 
 ## 2. Pattern taxonomy
 
-Twenty-two mechanisms. The finiteness is itself pedagogically important — tell learners the list is closed and short. Most of the felt hopelessness comes from believing the space is unbounded.
+Twenty-four mechanisms. The finiteness is itself pedagogically important — tell learners the list is closed and short. Most of the felt hopelessness comes from believing the space is unbounded.
 
 ### Group A — Linear scanning
 1. **Hashing / frequency counting** — membership and counts in O(1)
