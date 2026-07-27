@@ -58,7 +58,7 @@ This is the load-bearing product mechanic. It is what separates an instrument fr
 
 Hypotheses may be brief. "Sliding window, because the range shifts by one each step" is a complete commit. The point is not eloquence, it is falsifiability.
 
-## Three separable skills
+## Four separable skills
 
 Mastery is not one number. Track these independently, because they dissociate constantly and each has a different remedy.
 
@@ -68,6 +68,8 @@ Mastery is not one number. Track these independently, because they dissociate co
 | **Derivation** | Produce rungs 1–5 without writing code | "I know it's DP but not what the state is" |
 | **Implementation** | Write it clean, first attempt, no lookups | "I know the idea but my code is a mess" |
 | **Articulation** | Explain the whole ladder aloud in ≤3 min | Silent solving; bombs the actual interview |
+
+All four are persisted per skill node and decay independently. **Articulation is gated differently from the other three:** it is scored only in Phase 5 and interview simulation, and it constrains only the Phase 5 exit gate — it is null until then, and it never blocks a Phase 0–4 transition. Demanding it early adds load without payoff (`references/curriculum.md`).
 
 A learner at 90% recognition and 40% implementation needs syntax drills. A learner at 40% recognition and 90% implementation needs pattern-ID reps and should barely be coding at all. Prescribing the same "do 5 problems" to both is what makes people feel permanently behind.
 

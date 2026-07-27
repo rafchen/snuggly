@@ -20,6 +20,8 @@ Each skill node carries four independent scores in [0, 1]:
 
 **Thresholds.** A node is *unlocked* at recognition ≥ 0.5 on its prerequisites. It is *mastered* at recognition ≥ 0.85, derivation ≥ 0.75, implementation ≥ 0.70. Articulation is gated separately and only enforced in Phase 5, because demanding it early adds load without payoff.
 
+**Articulation is nullable.** It is persisted alongside the other three but stays null until the learner reaches Phase 5 or runs an interview simulation — those are the only writers. Placement never initializes it. A null articulation is not a zero and must never be averaged as one.
+
 **Decay.** Scores decay exponentially from `last_seen`. Implementation decays fastest (syntax evaporates), recognition slowest (pattern intuition is sticky). Set base half-lives around 10 days for implementation, 21 for derivation, 45 for recognition.
 
 **Why four scores and not one.** A single "mastery %" cannot distinguish a learner who can't start from one who can't finish, and those two need opposite interventions. The whole diagnostic value of the system lives in this separation.
