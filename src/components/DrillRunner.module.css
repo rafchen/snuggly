@@ -159,3 +159,26 @@
   gap: 0.25rem;
   font-size: 0.9375rem;
 }
+
+/* Problem header: difficulty pill and disguise level, the way a platform
+   problem page leads with its metadata before the prose. */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.disguise {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.constraintsHeading {
+  margin: 1.1rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}

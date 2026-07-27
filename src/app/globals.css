@@ -7,55 +7,99 @@
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  --bg: #fbfaf8;
-  --surface: #ffffff;
-  --surface-sunken: #f2f0ec;
-  --line: #ddd8d0;
-  --line-strong: #b9b2a7;
-  --text: #17150f;
-  --text-muted: #5d574c;
-  --text-faint: #8a8375;
+  /* LeetCode-style dark shell: cool neutrals, one amber accent, difficulty
+     colours carried straight through from the platform learners already use. */
+  --bg: #1a1a1a;
+  --surface: #282828;
+  --surface-sunken: #303030;
+  --surface-raised: #3e3e3e;
+  --line: #3e3e3e;
+  --line-strong: #4d4d4d;
+  --text: #eff1f6;
+  --text-muted: #b3b3b3;
+  --text-faint: #808080;
 
-  --accent: #8a3a12;
-  --accent-soft: #f4e6dc;
-  --ok: #1f5e3a;
-  --ok-soft: #e0efe5;
-  --miss: #96261f;
-  --miss-soft: #f8e3e1;
-  --warn: #6b4a05;
+  --accent: #ffa116;
+  --accent-soft: #3a2c11;
 
-  --focus: #1a4fb4;
+  /* Difficulty */
+  --easy: #00b8a3;
+  --medium: #ffb800;
+  --hard: #ff375f;
 
-  --radius: 6px;
+  --ok: #00b8a3;
+  --ok-soft: #12312d;
+  --miss: #ff375f;
+  --miss-soft: #3a1b23;
+  --warn: #ffb800;
+
+  --focus: #4c8bf5;
+
+  --radius: 8px;
   --gap: 1rem;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, "Roboto Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --bg: #131311;
-    --surface: #1c1c19;
-    --surface-sunken: #262521;
-    --line: #35342f;
-    --line-strong: #52504a;
-    --text: #f2f0ea;
-    --text-muted: #b3ada1;
-    --text-faint: #857f74;
+    color-scheme: light;
 
-    --accent: #e9945e;
-    --accent-soft: #33241a;
-    --ok: #7fce9d;
-    --ok-soft: #1b2b21;
-    --miss: #f0918a;
-    --miss-soft: #2f1d1c;
-    --warn: #dcb85c;
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --surface-sunken: #f0f1f3;
+    --surface-raised: #e4e5e7;
+    --line: #e0e1e4;
+    --line-strong: #c3c5c9;
+    --text: #262626;
+    --text-muted: #5c5f66;
+    --text-faint: #8a8d94;
 
-    --focus: #7aa6ff;
+    --accent: #c77c02;
+    --accent-soft: #fdf3e0;
+
+    --easy: #008576;
+    --medium: #b07d00;
+    --hard: #d92a4f;
+
+    --ok: #008576;
+    --ok-soft: #e3f5f2;
+    --miss: #d92a4f;
+    --miss-soft: #fdeaee;
+    --warn: #b07d00;
+
+    --focus: #2f6fe0;
   }
 }
+
+/* Difficulty pill, LeetCode's shape and colour language. */
+.difficulty {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  background: var(--surface-sunken);
+}
+.difficulty[data-level='easy'] { color: var(--easy); }
+.difficulty[data-level='medium'] { color: var(--medium); }
+.difficulty[data-level='hard'] { color: var(--hard); }
+
+/* Constraints and examples read as code, as they do on the platform. */
+.constraints {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  background: var(--surface-sunken);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0 0;
+  list-style: none;
+}
+.constraints li + li { margin-top: 0.35rem; }
 
 * {
   box-sizing: border-box;

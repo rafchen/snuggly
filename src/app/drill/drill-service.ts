@@ -37,6 +37,7 @@ import type {
 import { DRILL_TIME_CAP_SEC } from '@/lib/types'
 import { MOCK_LEARNER_ID, store } from '@/lib/ui-store'
 import { prisma } from '@/lib/store'
+import { constraintsFor, difficultyFor, type Difficulty } from '@/lib/presentation'
 import { MECHANISM_LABEL, REDUNDANCY_LABEL } from '@/components/labels'
 import { drillScore, gradeRedundancyOffline } from '@/lib/scoring'
 import { selectDrillItems } from '@/lib/interleave'
@@ -55,6 +56,10 @@ export interface DisplayClock {
 }
 
 export interface DrillItemPayload {
+  /** Derived from the curriculum phase, so it cannot drift from the DAG. */
+  difficulty: Difficulty
+  /** The forged edge cases, rendered as a constraints block. */
+  constraints: string[]
   /** Opaque handle. The server's own record of this issuance hangs off it. */
   token: string
   /** 1-based position in the run. The learner sees a count, never a score-so-far. */
@@ -190,6 +195,8 @@ async function issue(run: DrillRun): Promise<DrillItemPayload | null> {
     index: run.cursor + 1,
     totalItems: run.problemIds.length,
     item: toDrillItem(problem),
+    difficulty: difficultyFor(problem.phase),
+    constraints: constraintsFor(problem),
     displayClock: { issuedAtServerMs: record.issuedAtMs, serverNowMs: now, capSec: DRILL_TIME_CAP_SEC },
   }
 }
@@ -382,6 +389,8 @@ export async function expireItem(
         index: run.cursor + 1,
         totalItems: run.problemIds.length,
         item: toDrillItem(problem),
+        difficulty: difficultyFor(problem.phase),
+        constraints: constraintsFor(problem),
         displayClock: {
           issuedAtServerMs: issued.issuedAtMs,
           // Deliberately re-read: the resync must reflect the server's clock now,

@@ -129,7 +129,23 @@ export function DrillRunner({
       </header>
 
       <section className={styles.statement} aria-label="Problem statement">
+        <div className={styles.meta}>
+          <span className="difficulty" data-level={payload.difficulty}>
+            {payload.difficulty[0].toUpperCase() + payload.difficulty.slice(1)}
+          </span>
+          <span className={styles.disguise}>Disguise {payload.item.disguiseLevel}</span>
+        </div>
         <p>{payload.item.statement}</p>
+        {payload.constraints.length > 0 && (
+          <>
+            <h3 className={styles.constraintsHeading}>Constraints</h3>
+            <ul className="constraints">
+              {payload.constraints.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          </>
+        )}
       </section>
 
       <div className={styles.fields} aria-disabled={settled}>
