@@ -1,0 +1,269 @@
+/*
+ * Cracked — base styles.
+ *
+ * A focus tool used under a 90-second clock. Legibility over decoration:
+ * one accent, high contrast in both schemes, no animation that competes with
+ * the countdown for attention.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #fbfaf8;
+  --surface: #ffffff;
+  --surface-sunken: #f2f0ec;
+  --line: #ddd8d0;
+  --line-strong: #b9b2a7;
+  --text: #17150f;
+  --text-muted: #5d574c;
+  --text-faint: #8a8375;
+
+  --accent: #8a3a12;
+  --accent-soft: #f4e6dc;
+  --ok: #1f5e3a;
+  --ok-soft: #e0efe5;
+  --miss: #96261f;
+  --miss-soft: #f8e3e1;
+  --warn: #6b4a05;
+
+  --focus: #1a4fb4;
+
+  --radius: 6px;
+  --gap: 1rem;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131311;
+    --surface: #1c1c19;
+    --surface-sunken: #262521;
+    --line: #35342f;
+    --line-strong: #52504a;
+    --text: #f2f0ea;
+    --text-muted: #b3ada1;
+    --text-faint: #857f74;
+
+    --accent: #e9945e;
+    --accent-soft: #33241a;
+    --ok: #7fce9d;
+    --ok-soft: #1b2b21;
+    --miss: #f0918a;
+    --miss-soft: #2f1d1c;
+    --warn: #dcb85c;
+
+    --focus: #7aa6ff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.25;
+  font-weight: 620;
+  letter-spacing: -0.011em;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+h2 {
+  font-size: 1.125rem;
+}
+h3 {
+  font-size: 0.95rem;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--text);
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button[disabled] {
+  cursor: not-allowed;
+}
+
+input,
+textarea {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.6rem;
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+  line-height: 1.5;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-faint);
+}
+
+/* ── shared layout primitives ───────────────────────────────────────────── */
+
+.shell {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 4rem;
+}
+
+.topbar {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.topbar-inner {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.wordmark {
+  font-weight: 660;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+.nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.nav a:hover {
+  color: var(--text);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.btn {
+  background: var(--text);
+  color: var(--bg);
+  border: 1px solid var(--text);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-weight: 560;
+  font-size: 0.9375rem;
+}
+
+.btn:hover:not([disabled]) {
+  opacity: 0.88;
+}
+
+.btn[disabled] {
+  background: transparent;
+  color: var(--text-faint);
+  border-color: var(--line);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+}
+
+.btn-secondary:hover:not([disabled]) {
+  background: var(--surface-sunken);
+}
+
+.btn-secondary[disabled] {
+  color: var(--text-faint);
+  border-color: var(--line);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}

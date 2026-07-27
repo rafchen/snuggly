@@ -1,0 +1,248 @@
+.coach {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.head h1 {
+  margin-top: 0.15rem;
+}
+
+.statement {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 46rem;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 54rem) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.rungBlock,
+.hintBlock,
+.done,
+.log {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.prompt {
+  font-size: 1.125rem;
+  line-height: 1.45;
+  font-weight: 560;
+  letter-spacing: -0.008em;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.help {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  max-width: 30rem;
+}
+
+.error {
+  font-size: 0.875rem;
+  color: var(--miss);
+}
+
+.ruleNotice {
+  font-size: 0.875rem;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.8rem;
+}
+
+.hintHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hintHead span {
+  color: var(--text-faint);
+}
+
+.reason {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.hint {
+  border-top: 1px solid var(--line);
+  padding-top: 0.6rem;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.hintMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-faint);
+}
+
+.level {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+  color: var(--text-muted);
+}
+
+.hintReason {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.flag {
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.done h2 {
+  font-size: 1.25rem;
+}
+
+/* ── commit log ───────────────────────────────────────────────────────────── */
+
+.log {
+  position: sticky;
+  top: 1rem;
+}
+
+@media (max-width: 54rem) {
+  .log {
+    position: static;
+  }
+}
+
+.empty {
+  color: var(--text-faint);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+
+.commits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.commit {
+  border-left: 2px solid var(--line-strong);
+  padding-left: 0.7rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.commit[data-correct='true'] {
+  border-left-color: var(--ok);
+}
+
+.commit[data-correct='false'] {
+  border-left-color: var(--miss);
+}
+
+.commitMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-faint);
+}
+
+.mark {
+  font-family: var(--mono);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.commit[data-correct='true'] .mark {
+  color: var(--ok);
+}
+
+.commit[data-correct='false'] .mark {
+  color: var(--miss);
+}
+
+.commitText {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.commitHints {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

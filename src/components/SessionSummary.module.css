@@ -1,0 +1,274 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.head {
+  display: grid;
+  gap: 0.4rem;
+  max-width: 46rem;
+}
+
+.head h1 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.gate {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.missing {
+  margin: 0.15rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.15rem;
+  color: var(--text-muted);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sectionHead span {
+  color: var(--text-faint);
+}
+
+/* ── blocks ───────────────────────────────────────────────────────────────── */
+
+.blocks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.block {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.blockHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.blockHead span:last-child {
+  color: var(--text-faint);
+}
+
+.kind {
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.blockContent {
+  font-size: 0.9375rem;
+}
+
+.why {
+  font-size: 0.9375rem;
+  color: var(--text);
+  border-left: 2px solid var(--accent);
+  padding-left: 0.7rem;
+}
+
+/* ── deltas ───────────────────────────────────────────────────────────────── */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.table thead th {
+  font-size: 0.6875rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody th {
+  font-weight: 500;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+}
+
+.after {
+  font-weight: 620;
+}
+
+tr[data-direction='up'] .after {
+  color: var(--ok);
+}
+
+tr[data-direction='down'] .after {
+  color: var(--miss);
+}
+
+/* ── node bars ────────────────────────────────────────────────────────────── */
+
+.nodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.6rem;
+}
+
+.node {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.nodeName {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  font-weight: 620;
+}
+
+.bars {
+  margin: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.barRow dt {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.barRow dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bar {
+  flex: 1;
+  height: 5px;
+  background: var(--surface-sunken);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--text-muted);
+}
+
+.barValue {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  width: 2ch;
+  text-align: right;
+}
+
+/* ── failure ──────────────────────────────────────────────────────────────── */
+
+.failure {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--miss);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  gap: 1rem;
+}
+
+.code {
+  font-family: var(--mono);
+  background: var(--miss-soft);
+  color: var(--miss);
+  border-radius: 4px;
+  padding: 0.05rem 0.4rem;
+  margin-right: 0.3rem;
+}
+
+.codeSmall {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.evidence {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  max-width: 48rem;
+}
+
+.secondary {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9375rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.prescription {
+  font-size: 0.9375rem;
+}
+
+.learnerMessage {
+  font-size: 1rem;
+  line-height: 1.55;
+  border-top: 1px solid var(--line);
+  padding-top: 0.85rem;
+  max-width: 48rem;
+}
