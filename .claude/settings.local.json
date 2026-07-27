@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/rafaelchen/snuggly remote -v)",
+      "Bash(echo \"--- exit: $? \\(empty output = no remotes\\) ---\")",
+      "Bash(git -C /Users/rafaelchen/snuggly config --get user.name)",
+      "Bash(git -C /Users/rafaelchen/snuggly config --get user.email)",
+      "Bash(gh repo *)",
+      "Bash(mkdir -p /Users/rafaelchen/snuggly/cracked)",
+      "Bash(cp /Users/rafaelchen/Downloads/cracked/*.md /Users/rafaelchen/snuggly/cracked/)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
+    ]
+  }
+}
