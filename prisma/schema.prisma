@@ -189,6 +189,10 @@ model DrillSession {
   completedAt DateTime?
   /// JSON: DrillSessionResult, written when the session closes.
   result      String?
+  /// JSON: the in-flight run (problem order, cursor, issuance timestamps, attempts).
+  /// Persisted rather than held in memory: a module-level Map does not survive the
+  /// module re-evaluation between rendering a page and running a server action.
+  runState    String?
 
   learner  Learner        @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   attempts DrillAttempt[]

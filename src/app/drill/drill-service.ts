@@ -36,6 +36,7 @@ import type {
 } from '@/lib/types'
 import { DRILL_TIME_CAP_SEC } from '@/lib/types'
 import { MOCK_LEARNER_ID, store } from '@/lib/ui-store'
+import { prisma } from '@/lib/store'
 import { MECHANISM_LABEL, REDUNDANCY_LABEL } from '@/components/labels'
 import { drillScore, gradeRedundancyOffline } from '@/lib/scoring'
 import { selectDrillItems } from '@/lib/interleave'
@@ -113,7 +114,33 @@ interface DrillRun {
 /** A warm-up is ~10 interleaved items (curriculum.md: 5-minute warm-up block). */
 const DRILL_SET_SIZE = 10
 
-const runs = new Map<string, DrillRun>()
+/**
+ * Run state is persisted, not held in memory.
+ *
+ * A module-level Map does not survive the module re-evaluation that happens
+ * between rendering the page and executing a server action, so the run was gone
+ * by the time the learner pressed Submit and every answer reported an expired
+ * run. `issuedAtMs` still originates on the server and is still never accepted
+ * as input — persisting it changes where the server keeps its own timestamp,
+ * not who writes it.
+ */
+type PersistedRun = Omit<DrillRun, 'issued'> & { issued: IssuedItem[] }
+
+async function loadRun(runId: string): Promise<DrillRun | null> {
+  const row = await prisma.drillSession.findUnique({ where: { id: runId } })
+  if (!row?.runState) return null
+  const parsed = JSON.parse(row.runState) as PersistedRun
+  return { ...parsed, issued: new Map(parsed.issued.map((i) => [i.token, i])) }
+}
+
+async function saveRun(run: DrillRun): Promise<void> {
+  const persisted: PersistedRun = { ...run, issued: [...run.issued.values()] }
+  await prisma.drillSession.update({
+    where: { id: run.runId },
+    data: { runState: JSON.stringify(persisted) },
+  })
+}
+
 let counter = 0
 
 const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(++counter).toString(36)}`
@@ -173,8 +200,9 @@ export async function startRun(learnerId: string = MOCK_LEARNER_ID): Promise<{
 }> {
   const all = await store.listProblems()
   const selected = selectItems(all, DRILL_SET_SIZE)
+  const row = await prisma.drillSession.create({ data: { learnerId } })
   const run: DrillRun = {
-    runId: nextId('run'),
+    runId: row.id,
     learnerId,
     problemIds: selected.map((i) => i.problemId),
     cursor: 0,
@@ -182,9 +210,9 @@ export async function startRun(learnerId: string = MOCK_LEARNER_ID): Promise<{
     attempts: [],
     confusions: [],
   }
-  runs.set(run.runId, run)
   const payload = await issue(run)
   if (!payload) throw new Error('Drill run has no items.')
+  await saveRun(run)
   return { runId: run.runId, payload }
 }
 
@@ -304,8 +332,8 @@ function summarize(run: DrillRun): DrillSessionResult {
   }
 }
 
-function locate(runId: string, token: string): { run: DrillRun; issued: IssuedItem } {
-  const run = runs.get(runId)
+async function locate(runId: string, token: string): Promise<{ run: DrillRun; issued: IssuedItem }> {
+  const run = await loadRun(runId)
   if (!run) throw new Error('That drill run has expired. Start a new one.')
   const issued = run.issued.get(token)
   if (!issued) throw new Error('Unknown drill item.')
@@ -324,11 +352,12 @@ export async function submitAnswer(
   token: string,
   answer: DrillAnswer,
 ): Promise<SettleResult> {
-  const { run, issued } = locate(runId, token)
+  const { run, issued } = await locate(runId, token)
   if (answer.mechanism === null || answer.redundancy.trim() === '') {
     throw new Error('Both the mechanism and the redundancy are required.')
   }
   const feedback = await settle(run, issued, answer, false)
+  await saveRun(run) // settle mutated the run; persist before the action returns
   return { kind: 'settled', feedback, itemsRemaining: remainingIn(run) }
 }
 
@@ -341,7 +370,7 @@ export async function expireItem(
   token: string,
   partial: DrillAnswer,
 ): Promise<SettleResult> {
-  const { run, issued } = locate(runId, token)
+  const { run, issued } = await locate(runId, token)
   const elapsedSec = (Date.now() - issued.issuedAtMs) / 1000
   if (elapsedSec < DRILL_TIME_CAP_SEC) {
     const problem = await store.getProblem(issued.problemId)
@@ -364,13 +393,15 @@ export async function expireItem(
     }
   }
   const feedback = await settle(run, issued, partial, true)
+  await saveRun(run)
   return { kind: 'settled', feedback, itemsRemaining: remainingIn(run) }
 }
 
 /** Issues the next item, stamping its server timestamp at this instant. */
 export async function advanceRun(runId: string): Promise<AdvanceResult> {
-  const run = runs.get(runId)
+  const run = await loadRun(runId)
   if (!run) throw new Error('That drill run has expired. Start a new one.')
   const payload = await issue(run)
+  await saveRun(run)
   return payload ? { kind: 'next', payload } : { kind: 'done', summary: summarize(run) }
 }
