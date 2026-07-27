@@ -1,0 +1,66 @@
+{
+  "problemId": "search-in-rotated-order",
+  "sourceRef": "https://leetcode.com/problems/search-in-rotated-sorted-array/",
+  "title": "Search In A Rotated Ordering",
+  "statement": "An array of up to 100,000 distinct integers was originally in strictly increasing order, then rotated: some prefix of it was moved, intact, to the end. The rotation amount is not given and may be zero. Given a target value, report the position where it currently sits, or negative one if it is absent. You are told the array is a rotation of a sorted array, but you are not told where the rotation point is, and finding that point by scanning defeats the purpose.",
+  "primaryPattern": "binary_search_array",
+  "secondary": [],
+  "redundancy": "relinear_search_sorted",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "binary_search_array"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 distinct integers forming a rotated strictly increasing sequence, rotation amount unknown, plus a target. Output: an index or negative one. The structure is still highly ordered, just not globally.",
+    "brute": "Scan every position comparing against the target. O(n), which ignores the structure entirely.",
+    "bottleneck": "The scan re-derives order facts the structure already supplies: even after seeing enough values to know which side of the rotation point it is on, it keeps testing positions one at a time whose comparison outcome the ordering has already determined.",
+    "lift": "Binary search still applies, because at any midpoint at least one of the two halves is guaranteed to be a contiguous increasing run. Determine which half is the clean one, test whether the target lies inside its range, and discard accordingly.",
+    "invariant": "The target, if present, always lies within the current lo-to-hi range; each step identifies a half that is provably sorted, and discards a half only after confirming the target's value falls outside that half's value range.",
+    "verify": "Rotation of zero, which is the ordinary sorted case; rotation by n-1; single element present and absent; target at the rotation point itself; target smaller or larger than every element; 100,000 elements. O(log n) time, O(1) space."
+  },
+  "hints": [
+    "The array is not globally ordered but the statement still promises a lot of structure. Say precisely what that structure guarantees about any contiguous piece of the array.",
+    "You have a scan that works. The question is not how to make the scan faster; it is what the promised structure lets you conclude about positions you have not examined.",
+    "Look at the midpoint together with both ends. Compare the midpoint's value to the leftmost value. What does the result tell you about the entire left half, without examining a single element of it?",
+    "The waste is examining positions one at a time when a comparison at the midpoint already settles the ordering of a whole half, and therefore whether the target could be there at all.",
+    "Binary search survives the rotation. The extra work per step is deciding which of the two halves is the intact increasing run.",
+    "At each step, compare the midpoint's value to the value at lo. If it is at least as large, the left half is a clean increasing run; otherwise the right half is. Check whether the target's value falls inside the clean half's range: if so, search there; if not, search the other half. What tie or equality case would break this if the values were not guaranteed distinct?",
+    "Frame: up to 1e5 distinct integers forming a rotated strictly increasing sequence, rotation unknown, output is an index or negative one. Brute: scan all positions, O(n), which throws away the promised structure. Bottleneck: the scan tests positions one at a time whose comparison outcomes the ordering already determines; even after enough information to locate the rotation, it keeps re-deriving order locally. Lift: binary search, with one extra observation per step — at any midpoint, at least one half is a contiguous increasing run, because only one rotation point exists and it can lie in only one half. Invariant: the target, if present, always lies inside the current lo-to-hi range; a half is discarded only after confirming the target's value lies outside the clean half's value range. Concretely: if the midpoint value is at least the value at lo, the left half is clean, so search left when the target lies between them and right otherwise; symmetrically when the right half is clean. Verify: rotation of zero reduces to plain binary search, rotation by n-1, a single element present and absent, the target sitting exactly at the rotation point, and targets outside the value range entirely. Distinctness matters — with duplicates the midpoint can equal both ends, neither half is identifiably clean, and the worst case degrades to linear. Time O(log n), space O(1)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "binary_search_answer",
+      "temptingBecause": "It is the neighbouring mechanism and the code looks identical, so the two get conflated constantly. The discriminator is that here the search space is the input's index range and the target is an element that exists in the data, not a value being probed for feasibility."
+    },
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Restoring the array to sorted order makes the problem trivial, and the array is nearly sorted already. Sorting costs n log n for a single query, which is worse than the scan you started with."
+    },
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Ordered-looking data with indices at both ends is the converging-pointers picture, and the loop shape is similar. Convergence in lockstep is linear and gains nothing from the ordering."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The array is not actually sorted, so the usual 'already sorted' signal is absent and the ordinary reflex is to restore order first — which is exactly the move the constraints forbid.",
+  "edgeCases": [
+    "rotation amount of zero",
+    "rotation by n minus one",
+    "single element equal to the target",
+    "single element not equal to the target",
+    "target sitting exactly at the rotation point",
+    "target smaller than every element",
+    "target larger than every element"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "An array of up to 100,000 distinct integers was strictly increasing before some prefix was moved intact to the end; the amount moved is unknown and may be zero. Given a target, report its current index or negative one. Scanning and re-sorting are both too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A circular parking garage numbers its 100,000 bays with distinct increasing codes, but the entrance was relocated, so the bay list now starts partway through the sequence and wraps around exactly once. A driver has a code and needs the bay's position in the current list. Nobody recorded where the wrap happens. Walking the whole list is too slow, and re-ordering the list defeats the point. What mechanism applies, and what waste does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "problemId": "longest-rising-selection",
+  "sourceRef": "https://leetcode.com/problems/longest-increasing-subsequence/",
+  "title": "Longest Rising Selection",
+  "statement": "A sequence of up to 2,500 integers is given. Select some of its entries, keeping them in their original left-to-right order but not necessarily adjacent, so that each selected value is strictly greater than the one selected before it. Report the greatest number of entries such a selection can contain. Values may repeat and may be negative, and an empty sequence yields zero. Equal values may not both be selected.",
+  "primaryPattern": "dynamic_programming",
+  "secondary": [],
+  "redundancy": "recomputing_subproblems",
+  "phase": 4,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking",
+    "memoization",
+    "dp_1d",
+    "dp_lis"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 2,500 integers. Output: the length of the longest strictly rising selection preserving order. n at 2,500 makes a quadratic solution comfortable, which is a deliberate calibration — the n log n refinement is a separate lesson.",
+    "brute": "Recurse over positions carrying the last selected value: at each position, either skip it, or select it if it exceeds the last selected value and recurse with the new last value. Two branches per position, so roughly two-to-the-n calls.",
+    "bottleneck": "The recursion re-solves the same tail from the same position with the same last-selected value once for every distinct earlier selection that produces that pair, so the answer for 'positions from 40 onward, last selected value 7' is recomputed for every one of the many selections that arrive in that situation.",
+    "lift": "The subproblem is identified by two things only: the current position and the last selected value. Pinning the last selected value to be the value at a chosen position makes the state one-dimensional — the best rising selection ending at position i — and each state is computed once from the states before it.",
+    "invariant": "The value stored at position i is always the length of the longest strictly rising selection that ends exactly at position i; the answer is the largest such value over all positions.",
+    "verify": "An empty sequence, giving zero; one entry, giving one; strictly decreasing values, giving one; strictly increasing values, giving n; all values equal, giving one because equal values may not both be selected; 2,500 entries. Quadratic time with linear space."
+  },
+  "hints": [
+    "The sequence holds at most 2,500 entries. Say what running times that magnitude permits, and note that the answer is a length rather than the selection itself.",
+    "You have a recursion that decides at each position whether to select it. Say what information the recursion needs to carry forward, beyond the position.",
+    "It carries the last selected value. Two different earlier selections that happen to leave the same position and the same last value produce identical remaining work, and your recursion does that work twice.",
+    "Name the waste: recomputing the answer to a subproblem already solved, where the subproblem is fully described by the current position and the last selected value.",
+    "Store each subproblem's answer the first time it is computed — memoization. Then reduce the state: instead of carrying an arbitrary last value, anchor it to a position, so the quantity becomes the longest rising selection ending at position i.",
+    "Fill an array where entry i is one plus the largest entry j before i whose value is strictly smaller than the value at i, or one if no such j exists. The answer is the largest entry in the array. Why does anchoring the state to 'ending exactly at i' remove the need to carry the last selected value at all?",
+    "Frame: up to 2,500 integers, output is the length of the longest strictly rising order-preserving selection. n at 2,500 makes a quadratic solution comfortable. Brute: recurse over positions carrying the last selected value; two branches per position, roughly two-to-the-n calls. Bottleneck: the pair of position and last selected value fully determines the remaining work, yet the recursion re-derives that work once per earlier selection producing the same pair. Lift: memoize on that pair, then sharpen the state. Anchoring the last selected value to a position — asking for the longest rising selection ending exactly at i — makes the state one-dimensional and removes the need to carry a value at all, because the value is recoverable from the index. Invariant: entry i holds the length of the longest strictly rising selection ending exactly at i. It is computed as one plus the maximum entry over earlier positions with strictly smaller values, defaulting to one. The answer is the maximum entry, not the last one, because the best selection need not end at the final position. Verify: an empty sequence gives zero, one entry gives one, strictly decreasing gives one, strictly increasing gives n, and all-equal gives one since strictness forbids ties. Time O(n squared), space O(n). The n log n refinement maintains, for each achievable length, the smallest possible value ending a rising selection of that length; that list is sorted, so each entry is placed by a binary search. It is worth learning as a second lesson, after the recurrence has been derived from the brute force rather than memorized."
+  ],
+  "distractors": [
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "Sweeping and extending the selection whenever the value rises is the obvious first idea and it is fast. It fails on a sequence like 1, 100, 2, 3, 4, where taking 100 early forfeits a longer run."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "'Longest something' plus a scan is window vocabulary and the answer is a length. The selected entries are explicitly not required to be contiguous, which is precisely what a window requires."
+    },
+    {
+      "mechanism": "binary_search_array",
+      "temptingBecause": "The faster solution really does use binary search over a maintained list, so the association is genuine. Reaching for it before deriving the recurrence teaches a trick without the reasoning that produces it."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "an empty sequence",
+    "a single entry",
+    "strictly decreasing values",
+    "strictly increasing values",
+    "all values equal",
+    "values including negatives",
+    "2,500 entries in a sawtooth pattern"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given up to 2,500 integers, select entries keeping their original order, not necessarily adjacent, so that each selected value is strictly larger than the previous selected value. Report the greatest possible number of selected entries. Exploring selections recursively is exponential. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "An archivist reviews 2,500 dated artefacts listed in the order they were catalogued. She wants the longest possible display sequence that follows catalogue order while showing artefacts of strictly increasing value, skipping any she likes. Artefacts of equal value cannot both appear. Report how many artefacts the longest such display can hold. Trying every subset in catalogue order is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "problemId": "spread-out-placements",
+  "sourceRef": "https://leetcode.com/problems/magnetic-force-between-two-balls/",
+  "title": "Place Them As Far Apart As Possible",
+  "statement": "Up to 100,000 slots sit at given distinct integer coordinates along a line, in arbitrary order in the input, with coordinates as large as one billion. You must occupy exactly m of these slots, where m is at least two and at most the number of slots. The quality of a placement is the smallest gap between any two occupied slots. Report the largest quality achievable over all ways of choosing which m slots to occupy.",
+  "primaryPattern": "binary_search_answer",
+  "secondary": [
+    "sorting_preprocess",
+    "greedy"
+  ],
+  "redundancy": "retesting_monotone_feasibility",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "binary_search_array",
+    "binary_search_answer",
+    "sorting_preprocess"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 distinct coordinates up to 1e9, in arbitrary order, and a count m. Output: the maximized minimum gap. Candidate answers range from 1 to the span between the extreme coordinates — again a numeric range far larger than the input.",
+    "brute": "Enumerate every choice of m slots, compute the smallest gap in each, and keep the largest. Combinatorial and immediately hopeless.",
+    "bottleneck": "It re-evaluates enormous families of choices that differ by one slot, recomputing the same pairwise gaps over and over, and it re-checks choices that are provably worse than one already rejected because they leave two slots even closer together.",
+    "lift": "Sort the coordinates once, then ask the decision question: for a candidate gap g, can m slots be occupied with every consecutive pair at least g apart? A single greedy left-to-right pass — take the first slot, then take each next slot at least g beyond the last taken — answers it optimally. Feasibility is monotone decreasing in g, so binary search g.",
+    "invariant": "Within a feasibility check, the greedy pass always leaves the last occupied slot as far left as possible for the count placed so far, so if any valid placement of that many slots exists, the greedy one exists too. Across the search, lo is always a feasible gap and hi plus one always infeasible.",
+    "verify": "m equal to 2, giving the full span; m equal to the slot count, giving the smallest consecutive gap; two slots only; all coordinates consecutive integers; 100,000 slots with m at 50,000. Sorting is n log n and about 30 feasibility passes are linear each, so O(n log n + n log span)."
+  },
+  "hints": [
+    "Two very different magnitudes: 100,000 slots but coordinates reaching a billion. Which of those numbers bounds the set of possible answers, and which bounds the cost of checking one?",
+    "You have an enumeration of choices. Describe its cost, and then describe what two choices that differ in a single slot have in common.",
+    "Nearly all their pairwise gaps are identical, and you recompute them anyway. Worse, a choice that leaves two slots closer together than an already-rejected choice is still fully evaluated.",
+    "Flip the question. If someone names a candidate gap g and asks only whether some valid placement achieves at least g, how hard is that to answer, and does the answer change predictably as g grows?",
+    "It is answerable by one greedy pass over the sorted coordinates, and it flips from yes to no exactly once as g increases. A monotone predicate over an ordered candidate range is a binary search on the answer.",
+    "Sort the coordinates. Binary search g between 1 and the distance between the extremes. To test g, walk the sorted coordinates taking the first slot and then every slot at least g beyond the last taken; feasible when you place at least m. Keep the largest feasible g. Why does the greedy check never miss a placement that some cleverer choice would have found?",
+    "Frame: up to 1e5 distinct coordinates up to 1e9 in arbitrary order, choose exactly m slots, maximize the minimum pairwise gap. The candidate answers run from 1 to the span between extremes, a space far larger than the input, which is itself the fingerprint. Brute: enumerate all choices of m slots; combinatorial. Bottleneck: choices differing in one slot share almost all their pairwise gaps and are recomputed in full, and provably-worse choices are evaluated anyway. Lift: sort once, then decide rather than optimize. For a candidate g, a greedy left-to-right pass takes the leftmost slot and then every slot at least g past the last taken. Invariant: after placing j slots the greedy pass has the leftmost possible last position among all valid j-slot placements, proved by induction, so it places the maximum possible count — meaning if any placement of m slots with gap g exists, greedy finds one. Feasibility is monotone decreasing in g, so binary search: lo always feasible, hi plus one always infeasible. Verify: m of 2 gives the span between extremes, m equal to the slot count gives the smallest consecutive gap, two slots only, coordinates that are consecutive integers, and 1e5 slots with m at 5e4. Cost is O(n log n) to sort plus about 30 linear passes, so O(n log n + n log span), O(1) extra space. Note that only consecutive occupied pairs need checking, since a non-consecutive pair is always further apart."
+  ],
+  "distractors": [
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "The greedy pass is genuinely part of the solution, and 'spread them out as much as possible' begs for a direct construction. Without a target gap to construct against, there is nothing to be greedy about — the spacing depends on m in a way no local rule captures."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Choose m of n items to optimize a value' is the selection-DP fingerprint, with a state of position and count chosen. It is writable and it is O(n squared times m), which is far past the limits."
+    },
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Sorted coordinates plus a gap between two chosen positions is converging-pointers imagery, and the extremes are always occupied in an optimal answer. Two pointers cannot decide which of the interior slots to take."
+    }
+  ],
+  "disguiseLevel": 3,
+  "misleadingFingerprint": "The input arrives unsorted and the wording never says 'minimize the maximum' or 'maximize the minimum' in those words, so the binary-search-on-answer signal has to be recovered from the structure rather than read off the prompt.",
+  "edgeCases": [
+    "m equal to 2",
+    "m equal to the number of slots",
+    "exactly two slots",
+    "coordinates that are consecutive integers",
+    "coordinates spread across the full billion range",
+    "100,000 slots with m at 50,000"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Up to 100,000 distinct positions on a line are given in arbitrary order, with coordinates up to a billion. Choose exactly m of them so that the smallest distance between any two chosen positions is as large as possible, and report that distance. Enumerating choices is hopeless. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A wildlife agency has 100,000 surveyed nesting sites along a river, each at a known kilometre marker, listed in survey order rather than river order. It must install exactly m sensors, one per site, and the network's reliability is governed by the closest pair of sensors — the nearer any two sit, the more they interfere. Choose the sites so the closest pair is as far apart as possible and report that distance. What mechanism applies, and what wasted work does it kill?"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "problemId": "bulk-reservation-totals",
+  "sourceRef": "https://leetcode.com/problems/corporate-flight-bookings/",
+  "title": "Bulk Reservations Across A Range Of Days",
+  "statement": "A calendar has up to 20,000 numbered days, all starting at zero reservations. Up to 20,000 booking records arrive; each names a first day, a last day, and a quantity, and means that every day in that inclusive span gains that quantity. After all records are applied, report the final total for every one of the days. Spans may overlap arbitrarily, a span may cover a single day, and quantities are positive.",
+  "primaryPattern": "prefix_sums",
+  "secondary": [],
+  "redundancy": "resumming_static_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "prefix_sums",
+    "difference_arrays"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 20,000 days and up to 20,000 span-and-quantity records. Output: the final value of all days. All records are known before any answer is needed — nothing is queried mid-stream.",
+    "brute": "For each record, loop over every day in its span and add the quantity. O(records * span length), up to 4e8 when spans are long.",
+    "bottleneck": "Overlapping records re-walk the same days, adding a quantity one day at a time; a day covered by 20,000 records is written to 20,000 separate times even though only the final total is ever read.",
+    "lift": "Record each span as two events instead of a walk — the quantity arriving at the first day and departing just after the last — then recover every day's total with a single running-sum sweep at the end.",
+    "invariant": "After all records are posted, the difference array D satisfies: the running total of D through index i equals the sum of quantities of every record whose span contains day i, because each record contributes its quantity from its start onward and cancels it after its end.",
+    "verify": "A single record covering one day; a record covering all days; 20,000 records all covering the whole calendar; disjoint records; a record ending on the final day, which is where the cancellation index runs off the end. O(records + days) time and O(days) space."
+  },
+  "hints": [
+    "Note what the statement does not ask for: it never asks for a day's value partway through. Every record is known before any answer is needed. What does that permit?",
+    "You have the loop-over-each-span approach. Consider two records whose spans overlap heavily and describe the work the second one repeats.",
+    "Both records walk across the same overlapping days, adding one number per day. A day sitting inside many spans gets written to once per span, and only the final value is ever read.",
+    "The repeated operation is walking across the interior of a range to apply a uniform change, when the interior of the range is exactly where nothing distinguishes one day from the next.",
+    "Represent each record by what changes at its boundaries rather than by its interior: a difference array records the quantity entering at the start and leaving just past the end.",
+    "Make an array D of length days+1, all zeros. For each record, add the quantity at the first day's index and subtract it at the index just past the last day. Then sweep once, keeping a running total; the running total at index i is day i's answer. Why is D made one longer than the calendar?",
+    "Frame: up to 2e4 days and 2e4 span-and-quantity records, with every record known before any output is needed — that offline property is what licenses the whole approach. Brute: for each record, walk its span adding the quantity; O(records times span length), up to 4e8. Bottleneck: heavily overlapping records re-walk the same days one at a time, so a day inside many spans is written to once per span even though only its final total is ever read. Lift: a difference array. Post each record as two boundary events — plus quantity at the first day, minus quantity just past the last day — and recover the answers with one running-sum sweep. Invariant: after all postings, the running total of D through index i equals the sum of the quantities of exactly those records whose spans contain day i, because each record's contribution switches on at its start and cancels after its end. Making D one slot longer than the calendar means a record ending on the final day can cancel at a legal index instead of running off the end. Verify: one record over one day, one record over all days, 2e4 records all spanning the calendar, disjoint records, and a record ending on the last day. Time O(records + days), space O(days)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "segment_tree",
+      "temptingBecause": "Range updates with lazy propagation is exactly what a segment tree is built for, and it is correct here. It is also the answer to a harder question — updates and queries interleaved — and the statement quietly guarantees they are not."
+    },
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Span-and-quantity records look like intervals, and sorting intervals by start and sweeping is the reflex for interval problems. It works and costs an unnecessary sort, because the days are already an index you can post events into directly."
+    },
+    {
+      "mechanism": "heap",
+      "temptingBecause": "A sweep that tracks which spans are currently active suggests a priority queue keyed on end day, which is the standard interval-overlap machine. Nothing here needs to know which spans are active — only the running total does."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The wording is interval-shaped, which summons sorting and sweep-line machinery, and the phrase 'range update' summons a segment tree. The absent mid-stream query is the detail that makes both unnecessary.",
+  "edgeCases": [
+    "a single record covering one day",
+    "a record covering every day",
+    "20,000 records all covering the entire calendar",
+    "entirely disjoint records",
+    "a record whose span ends on the last day",
+    "a calendar with one day"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "An array of up to 20,000 counters starts at zero. Up to 20,000 instructions arrive, each saying 'add q to every position from i through j inclusive'. After all instructions are applied, report the final value of every counter. No counter is read until all instructions have been applied. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A stadium has 20,000 numbered seats and 20,000 group bookings. Each booking claims a contiguous block of seat numbers and specifies how many people occupy each seat in that block over the season. Blocks overlap freely. At the end of the booking period, the operator needs the final occupancy figure for every seat; no figure is needed until then. Applying each booking seat by seat is far too slow. What mechanism, and what work does it save?"
+    }
+  ]
+}

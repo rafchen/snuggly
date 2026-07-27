@@ -1,0 +1,67 @@
+{
+  "problemId": "merge-many-sorted-streams",
+  "sourceRef": "https://leetcode.com/problems/merge-k-sorted-lists/",
+  "title": "Merge Many Already-Sorted Streams",
+  "statement": "You are handed up to 10,000 streams, each already in non-decreasing order, holding up to 100,000 values in total across all of them. Produce a single non-decreasing sequence containing every value from every stream. A stream may be empty and all of them may be empty. Values may repeat, both within a stream and across streams, and every copy must appear in the output. You may read from any stream at any time but each stream must be consumed in order.",
+  "primaryPattern": "heap",
+  "secondary": [],
+  "redundancy": "refinding_extreme_of_changing_set",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "heapq",
+    "heap_topk"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 10,000 non-decreasing streams with up to 100,000 values in total. Output: one merged non-decreasing sequence. Each stream is already ordered, so the only decision at each output step is which stream to take from.",
+    "brute": "At every output step, look at the current front of all k streams and take the smallest. O(k) per output value gives O(N*k), up to 1e9.",
+    "bottleneck": "Every output step rescans all k stream fronts to find the smallest, even though at most one front changed since the previous step — the other k-1 comparisons re-derive an ordering that was already established one step earlier.",
+    "lift": "A min-heap holding one entry per non-empty stream, keyed on that stream's current front value. Each output step pops the smallest and pushes the successor from the same stream, so the cost per value is logarithmic in the number of streams rather than linear.",
+    "invariant": "The heap always contains exactly one entry per non-exhausted stream, holding that stream's smallest unconsumed value; therefore the heap's root is the smallest unconsumed value across all streams.",
+    "verify": "Zero streams; all streams empty; one stream; every stream holding one value; all values identical across streams; 10,000 streams with 100,000 values total. Total cost O(N log k) time and O(k) space beyond the output."
+  },
+  "hints": [
+    "Two counts matter and they are different: up to 10,000 streams but 100,000 values in total. Which one bounds the number of output steps, and which bounds the work you might do per step?",
+    "You have the take-the-smallest-front approach. Describe exactly what it inspects at each output step.",
+    "It compares all k fronts. But between two consecutive output steps only one stream's front moved, so all the other comparisons re-derive a ranking you already had.",
+    "The waste is re-finding the smallest element of a collection that changes by exactly one member between queries.",
+    "That is a min-heap's job description: maintain the smallest of a changing collection, with logarithmic cost per change instead of linear rescans.",
+    "Seed a min-heap with the front value of every non-empty stream, tagged with which stream it came from. Repeatedly pop the smallest, append it to the output, and push that stream's next value if it has one. Why does the heap hold only k entries rather than all N values, and what would go wrong if two streams produced equal values?",
+    "Frame: up to 1e4 already-ordered streams with 1e5 values in total; because each stream is internally ordered, the only decision at each output step is which stream to draw from. Brute: compare all k fronts each step and take the smallest; O(N*k), up to 1e9. Bottleneck: every step rescans all k fronts even though exactly one changed, so k-1 of the comparisons re-derive an ordering established one step earlier. Lift: a min-heap holding one entry per non-exhausted stream, keyed on that stream's current front. Invariant: the heap contains exactly one entry per live stream, holding that stream's smallest unconsumed value, so its root is the global smallest unconsumed value. Each step is one pop and at most one push, both logarithmic in k. The heap holds k entries rather than N because a stream's later values can never be needed before its front. Equal values across streams are harmless as long as the comparison never has to fall through to comparing stream contents — tag entries with a stream index so ties break deterministically rather than by attempting to compare payloads. Verify: zero streams, all streams empty, a single stream, every stream holding one value, and all values identical. Total O(N log k) time and O(k) extra space. Pairwise merging in a tournament also achieves O(N log k) and is worth knowing as the alternative."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Concatenating everything and sorting is correct and short, and at these limits it even passes. It throws away the fact that each stream is already ordered, which is the entire structure the problem is offering."
+    },
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Merging two sorted sequences with an index into each is the classic pointer-pair routine, and this looks like the same thing generalized. With k streams you would keep k indices, and finding the smallest among them is exactly the step that stays linear."
+    },
+    {
+      "mechanism": "binary_search_array",
+      "temptingBecause": "Sorted inputs make binary search feel like the natural tool, for instance to place each value into the output. Placement is not the difficulty; choosing the next value to emit is, and that is a running-minimum problem."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": "'Already sorted' is stated for every stream, which is usually a two-pointer or binary-search signal; here it means something different, namely that only the fronts ever compete.",
+  "edgeCases": [
+    "zero streams",
+    "all streams empty",
+    "exactly one stream",
+    "every stream holding exactly one value",
+    "all values identical across all streams",
+    "10,000 streams totalling 100,000 values",
+    "one stream holding all the values and the rest empty"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 10,000 sequences, each already in non-decreasing order and holding 100,000 values between them, must be merged into one non-decreasing sequence containing every value. Each sequence must be consumed in order. Scanning all sequence fronts at every output step is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "Ten thousand weather stations each transmit their readings in chronological order, 100,000 readings in total. A central archive must write a single file in chronological order containing every reading from every station, and it can only take the next unread reading from any station, never skip ahead within one. Some stations sent nothing. Checking every station before each write is far too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "problemId": "merge-records-by-shared-contact",
+  "sourceRef": "https://leetcode.com/problems/accounts-merge/",
+  "title": "Merge Records That Share A Contact",
+  "statement": "Up to 1,000 records are given. Each record carries an owner name and a list of contact addresses, with up to 10,000 addresses in total across all records. Two records describe the same person exactly when they share at least one address, and this sameness carries through chains: if record A shares an address with B and B shares a different address with C, then all three describe one person. Owner names are not identifying — different people may share a name and the same person always appears under one name. Produce, for each person, their name followed by all of their addresses sorted alphabetically with duplicates removed.",
+  "primaryPattern": "union_find",
+  "secondary": [
+    "hashing",
+    "sorting_preprocess"
+  ],
+  "redundancy": "remerging_overlapping_groups",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "union_find",
+    "hashing",
+    "sorting_preprocess"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 1,000 records with up to 10,000 addresses in total; sameness is defined by shared addresses and is transitive. Output: one merged entry per person with sorted, deduplicated addresses. Transitivity is the whole difficulty — a single pairwise pass is not enough.",
+    "brute": "Repeatedly compare every pair of records for a shared address; when a pair shares one, fuse them into a single record and start the comparison over, since fusing can create new sharings. O(records squared times addresses) per round, with up to a linear number of rounds.",
+    "bottleneck": "Each fusion rebuilds a combined record and then re-compares it against every other record from scratch, re-testing pairs whose sharing status was already determined, and the same address is re-scanned once per comparison it takes part in.",
+    "lift": "Give every distinct address a group representative and merge the groups of all addresses appearing in the same record. Transitive closure then comes for free: two records end up in the same group exactly when a chain of shared addresses links them.",
+    "invariant": "After processing a record, all of its addresses share one representative; therefore two addresses share a representative exactly when a chain of records connects them.",
+    "verify": "One record; records with no shared address at all; two records sharing an address plus a third joined only through the second; the same address repeated inside one record; two different people with identical names; 10,000 addresses. Merging is effectively constant per address; the final sort dominates at O(total addresses log total addresses)."
+  },
+  "hints": [
+    "The definition of sameness has two parts. State them separately, and note which of the two makes a single pass over all pairs insufficient.",
+    "You have an approach that compares records pairwise and fuses matches. Describe what has to happen after a single fusion.",
+    "The fused record can now share addresses with records that neither original shared with, so the whole comparison restarts, re-testing pairs already tested and rescanning the same addresses.",
+    "Name the waste precisely: repeatedly re-comparing and re-fusing groups whose membership overlaps, when each fusion invalidates the previous round of comparisons.",
+    "Stop merging records and start merging addresses. Give each distinct address a representative and, for each record, merge all of its addresses into one group. A union-find structure closes the chains automatically.",
+    "Map every address to an index and to its owner name. For each record, merge the representative of its first address with the representative of each remaining address. Then bucket all addresses by representative, sort each bucket, and prepend the name recorded for any address in it. Why is it safe to take the name from any single member of a bucket?",
+    "Frame: up to 1,000 records with up to 1e4 addresses in total; two records are the same person when they share an address, and sameness is transitive. Output is one merged entry per person with sorted deduplicated addresses. Transitivity is what defeats a single pairwise pass. Brute: compare all pairs, fuse on a shared address, restart; each fusion invalidates the previous round, giving repeated quadratic sweeps. Bottleneck: every fusion re-compares the merged record against all others from scratch and rescans the same addresses, re-testing pairs whose status was already known. Lift: union-find over addresses rather than over records. Assign each distinct address an index; for each record, merge its first address with every other address it contains. Invariant: after processing a record, all of its addresses share a representative, so two addresses share a representative exactly when a chain of records links them — which is precisely the transitive closure being asked for. Then bucket addresses by representative, sort each bucket alphabetically, and prefix the owner name. The name may be taken from any member because the problem guarantees one person always appears under one name; two distinct people sharing a name are separated by having no address chain between them, so they land in different buckets. Verify: a single record, records sharing nothing, a chain joined only through an intermediate record, an address repeated within one record, and two distinct people with identical names. Merging is effectively constant per address; the sorting dominates at O(A log A) with O(A) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "Modelling records as nodes and shared addresses as edges makes this a connected-components traversal, which is entirely correct. It requires building the edge list first, and finding which records share an address is itself the grouping problem in miniature."
+    },
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "A map from address to the records containing it is the obvious first structure and it does most of the setup. On its own it captures only direct sharing; the transitive chains still have to be closed by something else."
+    },
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Sorting the addresses brings duplicates together and is genuinely needed for the output format, so it feels like the core move. Sorting groups identical addresses, not the transitively connected records."
+    }
+  ],
+  "disguiseLevel": 3,
+  "misleadingFingerprint": "The transitive-closure requirement is buried in a sentence about chains, and the visible operations — matching strings, deduplicating, sorting — all point at hashing and sorting rather than at grouping under merges.",
+  "edgeCases": [
+    "a single record",
+    "records that share no address at all",
+    "a chain of three records joined only through the middle one",
+    "the same address listed twice inside one record",
+    "two different people sharing an owner name",
+    "10,000 addresses spread over 1,000 records",
+    "a record with exactly one address"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Up to 1,000 records each carry a name and a list of identifiers, 10,000 identifiers in total. Two records refer to the same entity if they share any identifier, and this relation is transitive through chains of records. Output one merged entry per entity with its identifiers sorted and deduplicated. Repeatedly fusing records and re-comparing is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A library has 1,000 borrower cards, each listing a name and some contact details — 10,000 details in total. Two cards belong to the same borrower if any contact detail appears on both, and this carries through chains of cards. Names are not reliable, since two borrowers can share one. Produce a consolidated list of borrowers with their contact details sorted and deduplicated. Comparing every pair of cards and restarting after each merge is far too slow. What mechanism applies, and what work does it save?"
+    }
+  ]
+}

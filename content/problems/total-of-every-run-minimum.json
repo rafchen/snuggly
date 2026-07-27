@@ -1,0 +1,66 @@
+{
+  "problemId": "total-of-every-run-minimum",
+  "sourceRef": "https://leetcode.com/problems/sum-of-subarray-minimums/",
+  "title": "Total Of Every Run's Smallest Value",
+  "statement": "Given up to 30,000 positive integers, consider every contiguous run of the sequence — there are about half a billion of them for the largest inputs. Take the smallest value in each run, and report the total of all those smallest values. Because the total can be enormous, report it modulo 1,000,000,007. A run of length one contributes its own single value.",
+  "primaryPattern": "monotonic_stack",
+  "secondary": [],
+  "redundancy": "refinding_next_greater",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "stack_basics",
+    "monotonic_stack"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 30,000 positive integers. Output: the sum over all contiguous runs of each run's minimum, modulo 1e9+7. There are roughly 4.5e8 runs at the top size, so runs cannot be enumerated at all.",
+    "brute": "Enumerate every run, tracking a running minimum as the right end extends, and accumulate. O(n^2), about 9e8 operations at n equal to 30,000 — too slow, and it also cannot be reused for larger n.",
+    "bottleneck": "It re-derives the minimum for runs that overlap almost completely; extending a run by one element re-examines a minimum already established, and every element participates as the minimum of a quadratic number of runs whose count is recomputed one run at a time.",
+    "lift": "Count contributions instead of enumerating runs. Each element is the minimum of exactly the runs that stay strictly inside its nearest-smaller boundaries on both sides, and a monotonic stack computes those two boundaries for every element in one pass.",
+    "invariant": "The stack holds indices whose values are strictly increasing; when an index is popped, the arriving index is its nearest smaller-or-equal element on one side and the entry beneath it is its nearest strictly smaller element on the other. Using strict on one side and non-strict on the other is what makes runs with tied minima counted exactly once.",
+    "verify": "One element; all elements equal, where the tie rule is what keeps the count exact; strictly increasing and strictly decreasing sequences; two elements; 30,000 identical elements. Each index is pushed and popped once, so O(n) time and O(n) space."
+  },
+  "hints": [
+    "Count the runs first. With 30,000 elements there are roughly four hundred and fifty million of them. Write that number down and conclude what it forbids.",
+    "You have the enumerate-every-run approach with a running minimum. Say what it does when the right end of the run extends by one, and what it already knew before that step.",
+    "It re-derives the minimum over ground it already covered. More importantly, the same element ends up being the minimum of a huge family of runs, and you rediscover that fact separately for each member of the family.",
+    "Reverse the accounting. Instead of asking each run for its minimum, ask each element how many runs it is the minimum of — that number times the element is its total contribution.",
+    "An element is the minimum of exactly those runs that do not reach past the nearest smaller element on its left or its right. Finding the nearest smaller element on both sides for every position is what a monotonic stack does in one pass.",
+    "Sweep once with a stack of indices holding strictly increasing values, popping when a smaller-or-equal value arrives. For a popped index i with left boundary L and right boundary R, the number of runs it minimizes is the count of starts times the count of ends, and its contribution is that product times its value. Use a strict comparison on one side and a non-strict one on the other. What goes wrong with equal neighbours if you use strict on both sides?",
+    "Frame: up to 3e4 positive integers, output is the sum of the minimum of every contiguous run, modulo 1e9+7; with about 4.5e8 runs, enumeration is out. Brute: extend each run's right end with a running minimum and accumulate; O(n^2). Bottleneck: overlapping runs re-derive the same minima, and a single element is the minimum of a quadratic family of runs whose membership is rediscovered one run at a time. Lift: switch from per-run to per-element accounting. Element i is the minimum of exactly those runs whose start lies after the nearest smaller element to its left, at index L, and whose end lies before the nearest smaller element to its right, at index R. That is i minus L choices of start times R minus i choices of end. A monotonic stack of strictly increasing values yields both boundaries for every index in one pass. Invariant: the stack holds strictly increasing values; on a pop, the arriving index is one boundary and the entry beneath is the other. Ties are the trap: if both boundaries used strict comparison, a run whose minimum appears twice would be counted twice, and if both used non-strict it would be counted zero times. Making one side strict and the other non-strict attributes each tied run to exactly one occurrence. Verify: one element, two elements, all elements equal, and strictly increasing or decreasing sequences. Each index is pushed and popped once: O(n) time, O(n) space, with all arithmetic taken modulo 1e9+7."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Sum over all runs' with a modulus is counting-DP vocabulary, and a state like 'total of minima of runs ending at i' is both natural and derivable. It works, and it is really the stack argument in disguise — which is exactly why it is worth separating them."
+    },
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "Any 'total over all contiguous ranges' problem smells like prefix aggregation, and prefix sums do handle range totals in constant time. Minimum is not invertible the way addition is, so no prefix trick recovers a range minimum."
+    },
+    {
+      "mechanism": "segment_tree",
+      "temptingBecause": "Range minimum is the segment tree's signature query, and it answers every run's minimum in log time. That still leaves a quadratic number of runs to query, so it does not touch the actual bottleneck."
+    }
+  ],
+  "disguiseLevel": 3,
+  "misleadingFingerprint": "The problem is phrased as an aggregate over all subranges with a modulus, which is counting-DP and prefix-aggregation vocabulary; nothing in the wording mentions neighbours, boundaries, or next-smaller elements.",
+  "edgeCases": [
+    "single element",
+    "two elements",
+    "all elements equal",
+    "strictly increasing sequence",
+    "strictly decreasing sequence",
+    "30,000 identical elements where tie handling decides correctness"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Given up to 30,000 positive integers, sum the minimum value of every contiguous run of the sequence and report the total modulo 1,000,000,007. There are hundreds of millions of runs, so they cannot be enumerated. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A chain of 30,000 pipe segments each has a maximum flow rating. Any contiguous stretch of the chain can be operated as a line, and that line's throughput is the rating of its weakest segment. An engineer wants the sum of the throughputs of every possible contiguous line, taken modulo 1,000,000,007 because the total is astronomically large. There are hundreds of millions of lines. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

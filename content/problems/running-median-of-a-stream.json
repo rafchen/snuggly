@@ -1,0 +1,68 @@
+{
+  "problemId": "running-median-of-a-stream",
+  "sourceRef": "https://leetcode.com/problems/find-median-from-data-stream/",
+  "title": "Median Of Everything Seen So Far",
+  "statement": "Values arrive one at a time, up to 100,000 of them, and after any arrival you may be asked for the median of everything received so far. When an odd number of values has arrived the median is the middle one in sorted order; when the count is even it is the average of the two middle ones, reported as a real number. Values may be negative and may repeat. Queries can be interleaved with arrivals in any pattern, and there can be as many queries as arrivals.",
+  "primaryPattern": "heap",
+  "secondary": [],
+  "redundancy": "refinding_extreme_of_changing_set",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "heapq",
+    "heap_topk",
+    "two_heaps"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: an interleaved stream of up to 100,000 insertions and up to 100,000 median queries. Output: a real number per query. The collection changes between queries, so no precomputed order survives.",
+    "brute": "Keep everything in a list; on each query, sort it and read the middle. O(m log m) per query, up to 1e10 across the stream. Keeping the list sorted by inserting in place is O(m) per insertion, which is no better.",
+    "bottleneck": "Each query re-establishes the full ordering of a collection that changed by a single value since the last query, then reads one or two entries out of it and discards the rest of the work.",
+    "lift": "You never need the whole order — only the boundary between the lower half and the upper half. Keep the lower half in a max-heap and the upper half in a min-heap, sized to differ by at most one, so both roots sit exactly at that boundary.",
+    "invariant": "Every value in the low heap is at most every value in the high heap, and the two sizes differ by at most one; therefore the median is the low root when the sizes differ, and the average of the two roots when they are equal.",
+    "verify": "First arrival, where the median is that value; two arrivals; all values identical; strictly increasing arrivals, which stress the rebalancing; all values negative; 100,000 arrivals. Each insertion costs O(log m) and each query O(1), with O(m) space."
+  },
+  "hints": [
+    "Two counts matter: up to 100,000 arrivals and up to 100,000 queries, interleaved arbitrarily. Say what the interleaving forbids that a batch of arrivals followed by a batch of queries would allow.",
+    "You have a working approach. Describe what it does at query time, and how much of that work the answer actually consumes.",
+    "It puts the whole collection in order to read one or two entries from the middle, and it does so again after a single new value arrives, re-deriving an ordering that was almost entirely correct already.",
+    "Name the waste: re-deriving a complete ordering of a collection that changed by one element, in order to look at a fixed position within it.",
+    "You do not need the ordering — you need the boundary between the smaller half and the larger half. Two heaps facing each other, one holding the lower half with its largest on top and one holding the upper half with its smallest on top, keep exactly that boundary available.",
+    "On each arrival, push into the low max-heap, then move its root into the high min-heap, then if the high heap has grown larger, move its root back. That sequence keeps both the ordering property and the size property. Which of those two properties would break if you skipped the middle step and pushed directly into whichever heap looked smaller?",
+    "Frame: an interleaved stream of up to 1e5 insertions and up to 1e5 median queries, so no precomputed ordering survives between queries. Brute: sort on each query, O(m log m) each, up to 1e10; maintaining a sorted list is O(m) per insertion, no better. Bottleneck: each query re-derives the full ordering of a collection that changed by one value, then reads one or two positions out of it. Lift: keep only the boundary. A max-heap holds the lower half and a min-heap holds the upper half. Invariant: every value in the low heap is at most every value in the high heap, and the sizes differ by at most one. Then the median is the low root when the low heap is larger, and the average of the two roots when the sizes are equal. Maintain it by always pushing into the low heap, immediately moving the low root into the high heap — which is what guarantees the cross-heap ordering regardless of where the new value belongs — and then moving the high root back if the high heap became larger, which restores the size property. Pushing directly into the heap that looks smaller preserves sizes but can violate the ordering, which is the classic bug. Verify: the first arrival, two arrivals, all-identical values, strictly increasing arrivals which force a rebalance every step, all-negative values, and 1e5 arrivals. Insertions cost O(log m), queries O(1), space O(m). Use a real division or an integer-safe average for the even case, since adding two large values can overflow."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "The median is defined in terms of sorted order, so sorting feels definitional rather than optional. It solves the static problem; here the collection changes between queries, so a sorted snapshot is stale immediately."
+    },
+    {
+      "mechanism": "binary_search_array",
+      "temptingBecause": "Maintaining a sorted array and binary-searching each insertion point sounds like it keeps the order cheaply. Locating the position is logarithmic but shifting the array to make room is linear, so insertions stay O(m)."
+    },
+    {
+      "mechanism": "segment_tree",
+      "temptingBecause": "A counting structure over the value range supports order-statistic queries under insertion and genuinely solves this. It needs a bounded or compressed value domain and far more code for the same asymptotics."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a single arrival",
+    "exactly two arrivals",
+    "all values identical",
+    "strictly increasing arrivals",
+    "all values negative",
+    "a query after every single arrival for 100,000 arrivals",
+    "even count where the two middle values are far apart"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Numbers arrive one at a time, up to 100,000 of them, and at any point you may be asked for the median of everything received so far, averaging the two middle values when the count is even. Queries and arrivals interleave arbitrarily. Re-sorting on each query is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A hospital triage board must always display the typical waiting time on the ward, defined as the middle value across all patients currently waiting, or the average of the two middle values when the count is even. Patients register continuously, up to 100,000 over a shift, and the board refreshes after every registration. Re-ranking every waiting patient on each refresh is far too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

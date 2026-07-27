@@ -1,0 +1,62 @@
+{
+  "problemId": "symmetric-after-filtering",
+  "sourceRef": "https://leetcode.com/problems/valid-palindrome/",
+  "title": "Symmetric Once The Noise Is Removed",
+  "statement": "A string of up to 200,000 characters may contain letters, digits, spaces and punctuation in any mix. Ignoring everything that is not a letter or a digit, and treating uppercase and lowercase as the same, decide whether what remains reads identically forwards and backwards. A string whose retained characters are empty counts as symmetric. Building a cleaned copy of the string is allowed but not required; a solution using constant extra space exists.",
+  "primaryPattern": "two_pointers_opposite",
+  "secondary": [],
+  "redundancy": "recomparing_sorted_pairs",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "two_pointers_opposite",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a string up to 200,000 characters. Output: a boolean. Constant extra space is achievable, so the target is one pass with no cleaned copy.",
+    "brute": "Filter the string down to letters and digits in lowercase, build the reversed copy, and compare the two strings character by character. O(n) time but O(n) extra space, and two full materializations.",
+    "bottleneck": "It builds and then re-reads two full copies of the string, walking every retained character three separate times — once to filter, once to reverse, once to compare — when each character only ever needs to be matched against exactly one partner.",
+    "lift": "One index from each end, each skipping over characters that are not letters or digits, comparing the two survivors and stepping inward. No copy is built at all.",
+    "invariant": "Every retained pair outside the current pair of indices has already been compared and matched; therefore the string is symmetric if and only if the remaining inner region is.",
+    "verify": "Empty string; a string of only punctuation; one character; 'A man, a plan'-style mixed punctuation; a 200,000-character string that fails at the very centre. One pass, O(n) time, O(1) space."
+  },
+  "hints": [
+    "Note the string reaches 200,000 characters and that constant extra space is stated to be achievable. What does the second clause tell you about the solution you were about to write?",
+    "Your working approach almost certainly produces something new before it answers the question. What does it produce, and does the final comparison actually need that object to exist?",
+    "You walk the string to filter it, walk the result to reverse it, and walk both to compare — three passes and two allocations, when every retained character is only ever checked against one specific partner.",
+    "The repeated operation is materializing and re-traversing the sequence in order to line up characters that could have been lined up in place, at the moment you first touched them.",
+    "Two pointers, one starting at each end, walking toward each other. The only extra logic is what to do when a pointer lands on a character that does not count.",
+    "Set an index at each end. While a pointer sits on a non-alphanumeric character, advance it inward without comparing. When both sit on retained characters, compare them case-insensitively; on a mismatch answer no, otherwise step both inward. Stop when they cross. What is the loop's termination condition when every character is punctuation?",
+    "Frame: a string up to 2e5 characters, output is a boolean, and the stated availability of constant extra space is the real constraint. Brute: filter to lowercase alphanumerics, build the reverse, compare; correct, linear time, but O(n) space and three traversals. Bottleneck: it builds and re-reads two full copies, touching each retained character three times, when each character has exactly one partner it ever needs to meet. Lift: two pointers converging from the ends, each skipping characters that do not count. Invariant: everything outside the current pair has already been matched, so the whole string is symmetric exactly when the remaining inner region is. Verify: empty string, punctuation-only string, single character, mixed punctuation and casing, and a 2e5 string differing only at the centre. Termination is when the indices cross, which also handles the case where no character is retained at all — that returns true. One pass, O(n) time, O(1) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "The word 'palindrome' is strongly bound to the interval DP that finds longest palindromic substrings, so the vocabulary alone drags a two-dimensional table into view. Here the whole string is fixed, so there is nothing to optimize over."
+    },
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "Comparing a string to its reverse suggests fingerprinting both and comparing the fingerprints, which is a real technique for repeated queries. For one comparison it is strictly more work with a false-positive risk attached."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "empty string",
+    "string consisting only of punctuation and spaces",
+    "single character",
+    "mixed case where the answer depends on case-folding",
+    "digits interleaved with letters",
+    "200,000 characters differing only at the exact centre"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "Given a string of up to 200,000 characters, ignore everything that is not a letter or digit, fold case, and decide whether the remaining sequence reads the same in both directions. A constant-extra-space solution is expected. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A DNA sequencer emits a 200,000-character read containing bases, quality markers, and separator symbols. Only bases count; separators and markers are noise and casing is not meaningful. A read is called self-complementary when its base sequence is identical read left-to-right and right-to-left. Decide whether a given read is self-complementary without allocating a cleaned copy of it. What mechanism, and what work does it save?"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "problemId": "shorten-words-to-their-roots",
+  "sourceRef": "https://leetcode.com/problems/replace-words/",
+  "title": "Shorten Each Word To Its Root",
+  "statement": "A collection of up to 30,000 root strings is given, together with a sentence of up to 1,000 space-separated lowercase words with a total length up to one million characters. Rewrite the sentence: replace any word that begins with one of the roots by that root, and when several roots match the same word, use the shortest of them. A word matching no root is left unchanged. Roots may themselves be prefixes of other roots.",
+  "primaryPattern": "trie",
+  "secondary": [],
+  "redundancy": "rewalking_shared_prefixes",
+  "phase": 2,
+  "prerequisites": [
+    "hashing",
+    "trie",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 30,000 roots and a sentence with up to 1e6 characters. Output: the rewritten sentence. Both the root set and the sentence are large, so the cost must not be their product.",
+    "brute": "For each word in the sentence, test it against every root by comparing characters from the start, keeping the shortest root that matches. O(words times roots times root length).",
+    "bottleneck": "Testing one word against 30,000 roots re-reads that word's leading characters once per root, and every group of roots sharing a leading segment causes the same characters of the word to be compared against the same characters again and again.",
+    "lift": "Put the roots into a trie so that shared leading segments occupy one path. Then a single walk down the word, one character at a time, meets every root that could match, and the first root-end encountered is the shortest match.",
+    "invariant": "Walking the word from the root of the trie, the node reached after i characters exists exactly when some root shares the word's first i characters; the first node on that walk marked as a root-end therefore spells the shortest matching root.",
+    "verify": "No roots, leaving the sentence unchanged; a root equal to a whole word; two roots where one is a prefix of the other, so the shorter must win; a word shorter than every root; a one-character root; a million characters of sentence. Building the trie is proportional to total root length and rewriting is proportional to sentence length."
+  },
+  "hints": [
+    "Two sizes are given: up to 30,000 roots and up to a million characters of sentence. Multiply them and compare against what you can afford, then note that a match is always decided from the first character onward.",
+    "You have the compare-against-every-root approach. Take one sentence word and describe what happens as it is tested against root number one, then root number two.",
+    "Its first character is compared against the first character of every root, its second against the second of every root that survived, and so on. Roots that agree with each other on their opening characters cause the identical comparison to be redone.",
+    "The waste is re-reading the same leading characters of the word against groups of stored strings that share those very characters.",
+    "Store the roots in a trie so that a shared leading segment is one path, then walk each word down it once.",
+    "Insert every root into a trie, marking the node where each root ends. For each sentence word, walk from the root one character at a time and stop at the first end-marked node, replacing the word with the path so far; if the walk falls off the tree, keep the word unchanged. Why does stopping at the first end-marked node give the shortest root rather than some arbitrary one?",
+    "Frame: up to 3e4 roots and a sentence of up to 1e6 characters; the cost must not be the product of the two. Brute: compare each word against every root character by character, keeping the shortest match; O(words times roots times root length). Bottleneck: a word's leading characters are re-read once per root, and every group of roots agreeing on an opening segment causes the identical character comparisons to be repeated. Lift: a trie over the roots, so a shared leading segment is stored and walked exactly once. Invariant: walking the word from the trie root, the node reached after i characters exists exactly when some root agrees with the word on its first i characters; so the walk visits precisely the candidate roots in increasing length order. Stopping at the first end-marked node therefore yields the shortest matching root, which is what the tie rule demands. If the walk falls off the tree before meeting any end marker, no root matches and the word survives. Verify: an empty root set leaves the sentence unchanged, a root equal to a whole word replaces it with itself, nested roots must resolve to the shorter, a word shorter than every root falls off the tree, and a one-character root matches aggressively. Building costs time proportional to total root length; rewriting costs time proportional to sentence length. Space is proportional to total root length."
+  ],
+  "distractors": [
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "Putting the roots in a set and testing every prefix of each word is a genuine solution and often fast enough. It costs time quadratic in word length in the worst case and re-hashes overlapping prefixes, which is the same waste wearing a different hat."
+    },
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Sorting the roots makes matching candidates contiguous and the shortest match easy to find, which feels like the natural preprocessing. It costs a log factor per word and still re-walks the shared leading characters during each comparison."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "'A word begins with a root' is a substring-matching phrase, and substring matching lives near window techniques. Nothing here slides — every candidate match is anchored at the word's first character."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The problem is phrased as a text-rewriting task rather than a lookup task, so the prefix structure has to be recognized from the matching rule rather than from any 'starts with' keyword in the goal.",
+  "edgeCases": [
+    "no roots at all",
+    "a root equal to an entire word",
+    "one root that is a prefix of another root",
+    "a word shorter than every root",
+    "a single-character root",
+    "a sentence of one million characters",
+    "a word matching no root"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given up to 30,000 root strings and a sentence of lowercase words totalling up to a million characters, replace every word that starts with some root by the shortest such root, leaving other words alone. Testing each word against every root is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A telecom bills calls by area code. It holds up to 30,000 area codes, some of which are extensions of others, and must process a log of up to a million digits' worth of dialled numbers. Each dialled number is billed under the shortest area code that its digits begin with, or left unbilled if no code matches. Checking every dialled number against every code is far too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

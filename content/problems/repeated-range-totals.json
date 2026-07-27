@@ -1,0 +1,61 @@
+{
+  "problemId": "repeated-range-totals",
+  "sourceRef": "https://leetcode.com/problems/range-sum-query-immutable/",
+  "title": "Many Range Totals Over Fixed Data",
+  "statement": "An array of up to 100,000 integers is fixed once and never changes. Afterwards, up to 100,000 queries arrive, each naming a start and an end position, and each asking for the total of the entries in that inclusive range. Answer every query. Values may be negative and ranges may be a single position or the entire array. The queries are not known in advance of the array being fixed, but no query modifies anything.",
+  "primaryPattern": "prefix_sums",
+  "secondary": [],
+  "redundancy": "resumming_static_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "prefix_sums"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a fixed array of up to 100,000 integers, then up to 100,000 range-total queries. Output: one number per query. The array never changes, which is the single most important word in the statement.",
+    "brute": "For each query, loop from the start position to the end position adding entries. O(1) preprocessing, O(n) per query, O(n*q) overall — up to 1e10.",
+    "bottleneck": "Two queries whose ranges overlap re-add every entry in the shared part, and with 100,000 queries a single entry near the middle of the array can be added into the accumulator tens of thousands of times, always producing the same contribution.",
+    "lift": "Precompute, once, the running total of every prefix. Any range total is then the difference of two of those precomputed numbers, so each query costs one subtraction.",
+    "invariant": "Entry P at index i always equals the total of the original entries at positions 0 through i-1; therefore the total of the inclusive range from a to b equals P at b+1 minus P at a.",
+    "verify": "Single-element ranges; a range covering the whole array; an empty array with no queries; all values negative; 100,000 queries all naming the same range. Preprocessing is O(n), each query is O(1), extra space is O(n)."
+  },
+  "hints": [
+    "Two magnitudes are stated: 100,000 entries and 100,000 queries. Multiply them. Then find the word in the statement that tells you the array never changes.",
+    "You have a correct per-query loop. Consider two queries that both cover the middle of the array and describe what the second one does that the first one already did.",
+    "Every entry inside the overlap is added again, and its contribution is identical both times because nothing about the array has changed between the two queries.",
+    "The waste is re-adding the same unchanging entries across ranges that overlap, once per query that touches them.",
+    "Because the data is static, all the addition can be done up front. Build a prefix array once, where each slot holds the running total of everything before it.",
+    "Build an array P of length n+1 with P at 0 equal to zero and P at i+1 equal to P at i plus the entry at i. A query for the inclusive range a to b is then P at b+1 minus P at a. Why is the array made one longer than the input, and what off-by-one does that extra slot prevent?",
+    "Frame: an array of up to 1e5 integers fixed once, then up to 1e5 range-total queries; the word 'never changes' is the hinge, because it is what makes precomputation valid. Brute: loop over the range per query, O(n) each, O(n*q) overall at up to 1e10. Bottleneck: overlapping queries re-add the same unchanging entries, and a middle entry can be re-added tens of thousands of times, contributing the identical amount every time. Lift: a prefix sum array built once in a single pass. Invariant: P at i equals the total of original positions 0 through i-1, maintained by construction. Then the inclusive range a to b totals P at b+1 minus P at a. The extra leading zero slot means a range beginning at position 0 needs no special case, which is where the classic off-by-one lives. Verify: single-position ranges, the full-array range, an empty array, all-negative values, and 1e5 identical queries. Preprocessing O(n), query O(1), space O(n). Use a 64-bit accumulator: 1e5 entries at 1e9 each overflow 32 bits."
+  ],
+  "distractors": [
+    {
+      "mechanism": "segment_tree",
+      "temptingBecause": "Range-total queries are the segment tree's headline use case, and it answers them correctly here. It solves a strictly harder problem — ranges under updates — and the statement rules updates out, so it is a log factor and a lot of code for nothing."
+    },
+    {
+      "mechanism": "sliding_window_fixed",
+      "temptingBecause": "Totalling a contiguous range is window vocabulary, and the running-total update looks the same. A window needs the ranges to arrive in sweeping order; here they arrive arbitrarily, so there is nothing to slide."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "single-position ranges",
+    "a range covering the entire array",
+    "empty array with zero queries",
+    "all values negative",
+    "100,000 queries all naming the identical range",
+    "values large enough that the total overflows 32 bits"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "An array of up to 100,000 integers is fixed and never modified. Up to 100,000 queries then arrive, each naming an inclusive range and asking for the total of the entries in it. Answer all of them. Looping over each range separately is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A retailer's sales figures for 100,000 consecutive days are finalized at year end and never revised. Analysts then submit 100,000 requests, each asking for total revenue between two given dates, inclusive. Refunds mean daily figures can be negative. Answer every request. Re-adding the days in each requested span is far too slow at this volume. What mechanism, and what waste does it remove?"
+    }
+  ]
+}

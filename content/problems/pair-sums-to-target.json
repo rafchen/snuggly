@@ -1,0 +1,60 @@
+{
+  "problemId": "pair-sums-to-target",
+  "sourceRef": "https://leetcode.com/problems/two-sum/",
+  "title": "Pair That Sums To Target",
+  "statement": "You are handed an unordered list of integers and one target value. Exactly one pair of distinct positions in the list adds up to that target; report those two positions in any order. The list may contain negatives and repeated values, and it can hold up to 100,000 entries, so an approach that weighs every pair against every other will not finish in time. A position may not be paired with itself.",
+  "primaryPattern": "hashing",
+  "secondary": [],
+  "redundancy": "reseeking_membership",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "hashing"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: unsorted integer list, length up to 100,000, plus a target. Output: the two indices. n at 1e5 means the intended cost is one pass, not n squared.",
+    "brute": "Fix each index i, then walk every j greater than i and test whether the two values reach the target. O(n^2) time, O(1) space.",
+    "bottleneck": "For every one of the n outer elements the inner loop rescans the remainder of the list to answer a single yes-or-no question — does the complementing value exist — and then discards everything it learned about which values are present, only to rescan for the next element.",
+    "lift": "A hash map from value to index answers 'does this complement exist, and where' in constant time, so the inner scan collapses into one lookup.",
+    "invariant": "At the moment index i is examined, the map contains exactly the values at indices 0 through i-1 mapped to their positions — never the current element, which is what forbids pairing an element with itself.",
+    "verify": "Two-element list; a target reached only by two equal values such as 3 and 3; all-negative input; n at 100,000 with the pair at the very end. Each element is inserted once and looked up once, so O(n) time and O(n) space."
+  },
+  "hints": [
+    "Read the size line again. The list can hold 100,000 entries. What class of running time does that quietly rule out before you have written a single line?",
+    "You almost certainly have a nested loop that produces the right answer. Describe, out loud, what the inner loop is doing while the outer index stays fixed.",
+    "For each element you walk the rest of the list to ask one question: is the value that completes this pair present anywhere? You ask that same kind of question n separate times and each time you answer it by scanning.",
+    "Name the waste precisely: you are re-searching the same collection for membership over and over, and every scan throws away the knowledge of which values it just saw.",
+    "Membership answered in constant time is exactly what a hash map buys you. Store the elements you have already walked past, keyed by their value.",
+    "One pass. At each element, look up target minus the current value in a map from value to index; if it is present you have your answer, otherwise insert the current value and move on. Ask yourself why the lookup must happen before the insert.",
+    "Frame: unsorted list up to 1e5 with a single valid pair, so the budget is linear. Brute: test all pairs, O(n^2). Bottleneck: the inner loop is a membership query answered by scanning, repeated n times over a collection that never changes shape. Lift: a hash map from value to index makes each membership query O(1). Invariant: before processing index i, the map holds exactly indices 0..i-1, so any hit is a genuinely earlier, distinct position. Do the lookup first and the insert second, otherwise an element whose value is exactly half the target matches itself. Verify: two elements, the 3-plus-3 case, negatives, and the pair sitting at the far end. Each element costs one lookup and one insert, giving O(n) time and O(n) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Pair-sum problems are the textbook home of sorting, and sorting is cheap at this n — but it destroys the original positions, which are the thing being asked for."
+    },
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Converging inward from both ends is the standard answer to 'find a pair summing to X', and the shape of the required output is identical. It only works after a sort you cannot afford to take."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "exactly two elements, which must be the answer",
+    "target reached only by two equal values, e.g. [3,3] with target 6",
+    "all values negative, target negative",
+    "duplicated values where only one of the copies participates",
+    "n at 100,000 with the pair at the last two positions"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "An unsorted list of up to 100,000 integers and a target number are given. Exactly one pair of positions holds values that add to the target. Return those two positions. Values repeat and may be negative, and no element may be paired with itself. What mechanism gets this into a single pass, and what repeated operation does that mechanism eliminate?"
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A warehouse has 100,000 parts, each stamped with an integer weight, listed in the order they came off the line. A shipping crate takes exactly two parts and must weigh exactly W. Exactly one valid pair of parts exists. Report the two line positions of that pair; the positions matter because the parts are picked by position, not by weight. Name the mechanism and the repeated work it removes."
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "problemId": "range-totals-under-updates",
+  "sourceRef": "https://leetcode.com/problems/range-sum-query-mutable/",
+  "title": "Range Totals While Values Keep Changing",
+  "statement": "An array of up to 30,000 integers is given. Then up to 30,000 operations arrive, interleaved in any order and not known in advance. An update names a position and a new value to store there. A query names a start and an end position and asks for the total of the entries in that inclusive range. Answer every query using the values current at the time it is asked. Values may be negative.",
+  "primaryPattern": "segment_tree",
+  "secondary": [
+    "prefix_sums"
+  ],
+  "redundancy": "recomputing_range_under_updates",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "prefix_sums",
+    "tree_basics",
+    "segment_tree"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: an array of up to 30,000 integers plus up to 30,000 interleaved point updates and range-total queries, arriving online. Output: one number per query. The word that changes everything relative to the static version is 'update'.",
+    "brute": "Two options, each bad on one side. Loop over the range per query, giving O(1) updates and O(n) queries. Or maintain a prefix-total array, giving O(1) queries and O(n) updates because every prefix at or after the changed position shifts. Either way one operation type is linear, so an adversarial mix costs O(n) per operation.",
+    "bottleneck": "With prefix totals, a single point update forces every prefix total from that position to the end to be recomputed, re-adding entries that did not change; with per-query looping, overlapping queries re-add the same unchanged entries once per query.",
+    "lift": "Store partial totals over a hierarchy of ranges rather than over prefixes. A segment tree keeps the total of each node's range, so a point update repairs only the ranges containing that position and a range query combines a logarithmic number of node totals.",
+    "invariant": "Every node's stored total always equals the sum of the current values in its range; an update repairs exactly the nodes on the path from the changed leaf to the root, and every other node's range is untouched by that position.",
+    "verify": "A query over a single position; a query over the whole array; an update that does not change the value; all updates and no queries; all values negative; 30,000 operations. Both operations are O(log n) with O(n) space."
+  },
+  "hints": [
+    "Compare this statement word by word with the version where the array is fixed. Find the clause that differs, and say why it invalidates the standard answer to the fixed version.",
+    "You have two working approaches and each is fast at one operation and slow at the other. State both costs explicitly before going further.",
+    "With precomputed running totals, changing one entry forces every running total from that entry onward to be rebuilt, re-adding a long stretch of entries that did not change at all.",
+    "Name the waste: recomputing aggregates over ranges that the update did not touch, because the aggregates were stored over ranges that all begin at position zero.",
+    "The problem is the shape of the stored ranges, not the storing itself. Store totals over a hierarchy of nested ranges — a segment tree — so a single position belongs to only a logarithmic number of them.",
+    "Build a tree in which each leaf holds one entry and each internal node holds the total of its two children's ranges. An update walks from the leaf to the root repairing each node it passes. A query descends, taking whole nodes that lie inside the requested range and recursing only into nodes that straddle a boundary. How many nodes can straddle a boundary at each level?",
+    "Frame: up to 3e4 integers with up to 3e4 interleaved point updates and range-total queries arriving online; the word 'update' is what invalidates the static answer. Brute: either loop per query, giving O(1) updates and O(n) queries, or keep prefix totals, giving O(1) queries and O(n) updates since every prefix from the changed position onward shifts. An adversarial mix makes either one O(n) per operation. Bottleneck: prefix totals are aggregates over ranges that all start at position zero, so a single change invalidates a linear number of them and re-adds entries that never changed; per-query looping re-adds the same unchanged entries once per overlapping query. Lift: a segment tree — store totals over a hierarchy of nested ranges so each position lies in only about log n of them. Invariant: every node's stored total equals the sum of the current values in its range. An update repairs exactly the nodes on the leaf-to-root path, which are precisely the ranges containing that position. A query descends from the root, adding a node's total whole when its range lies inside the requested range, ignoring it when disjoint, and recursing when it straddles. At most two nodes per level can straddle a boundary — one at each end of the requested range — so the query touches O(log n) nodes. Verify: a single-position query, a whole-array query, an update writing the same value, an all-update workload, all-negative values, and 3e4 operations. Both operations O(log n), space O(n), with 64-bit totals since 3e4 large values overflow 32 bits."
+  ],
+  "distractors": [
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "It is the correct answer to the same question without updates, and the two statements differ by one clause. This is the confusion the problem exists to create: prefix totals are optimal until a single value can change, at which point they become the worst option."
+    },
+    {
+      "mechanism": "sliding_window_fixed",
+      "temptingBecause": "Maintaining a running total by adding and subtracting at the edges is the window update rule and it looks like the same incremental idea. Windows require the queried ranges to arrive in sweeping order; here they arrive arbitrarily and interleaved with writes."
+    },
+    {
+      "mechanism": "heap",
+      "temptingBecause": "'A structure that supports updates efficiently' is often heard as 'priority queue', since that is the usual mutable-collection answer. A heap maintains an extreme, not an aggregate over an arbitrary range."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": "The statement is nearly word-for-word the static range-total problem, so the natural reflex is the prefix-total answer; only the update clause distinguishes them.",
+  "edgeCases": [
+    "a query over a single position",
+    "a query over the entire array",
+    "an update that writes the value already present",
+    "a workload of updates with no queries",
+    "all values negative",
+    "30,000 operations alternating update and query",
+    "an array of length one"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "An array of up to 30,000 integers receives up to 30,000 interleaved operations, arriving online: write a new value at a position, or ask for the total over an inclusive range using current values. Answer every query. Precomputing running totals makes writes linear; looping per query makes reads linear. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A warehouse tracks stock at 30,000 shelf locations. Throughout the day, up to 30,000 events arrive in real time: either a recount sets a shelf's quantity to a new number, or an auditor asks for the total quantity across a contiguous block of shelves as it stands right now. Neither the recounts nor the audit ranges are known ahead of time. Recomputing running totals after each recount is too slow, and adding up each audited block is too slow as well. What mechanism, and what waste does it remove?"
+    }
+  ]
+}

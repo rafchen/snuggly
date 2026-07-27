@@ -1,0 +1,70 @@
+{
+  "problemId": "where-to-start-the-circuit",
+  "sourceRef": "https://leetcode.com/problems/gas-station/",
+  "title": "Where To Start The Circuit",
+  "statement": "Up to 100,000 depots are arranged in a circle, numbered in travel order. At depot i you collect a known amount of fuel, and travelling from depot i to the next one consumes a known amount. You begin with an empty tank at a depot of your choice, must travel the whole circle in the given direction returning to your start, and may never let the tank go negative at any point. Report the index of a valid starting depot, or negative one if none exists. It is guaranteed that at most one valid starting depot exists.",
+  "primaryPattern": "greedy",
+  "secondary": [
+    "prefix_sums"
+  ],
+  "redundancy": "reevaluating_safe_local_choice",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "sorting_with_keys",
+    "sorting_preprocess",
+    "greedy_exchange"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: two arrays of up to 100,000 non-negative numbers over depots arranged in a circle. Output: a starting index or negative one. Two facts are decisive: the tank starts empty, and a valid start is unique when it exists.",
+    "brute": "Try each depot as a start and simulate the full circle from it, abandoning the attempt as soon as the tank goes negative. O(n^2) in the worst case, which is realized when most starts fail near the end.",
+    "bottleneck": "Simulating from depot i and then from depot i+1 re-walks the same stretch of depots and re-adds the same net fuel differences; when a start at i fails at depot j, every start between i and j is simulated separately and fails at the same depot j for the same reason.",
+    "lift": "Two facts settle it. First, a full circuit is possible at all exactly when the total fuel collected is at least the total consumed. Second, if a start at i first fails on reaching j, then no depot between i and j can succeed either, so the next candidate is j — a locally safe skip that never has to be revisited.",
+    "invariant": "At every point of the sweep, the running tank measured from the current candidate start is non-negative, and every depot skipped so far has been proved incapable of completing the circuit.",
+    "verify": "One depot with enough fuel and with too little; total fuel exactly equal to total consumption; all differences zero; a valid start at the last depot; total fuel short by one unit, giving negative one; 100,000 depots. One pass, O(n) time and O(1) space."
+  },
+  "hints": [
+    "Two details in the statement are load-bearing: the tank starts empty, and at most one valid start exists. Also, before asking where to start, ask whether any start can work at all — what single comparison decides that?",
+    "You have a simulation from each candidate start. Describe what happens when the start at depot i fails partway around.",
+    "You then restart the whole simulation at depot i+1, re-walking almost exactly the same depots and re-adding the same net differences, only to fail at the same place for the same reason.",
+    "Name the waste: re-evaluating candidate starts whose failure is already implied by a failure you have just observed, and re-adding the same net fuel differences across overlapping stretches.",
+    "Find a local rule you can prove is never regretted. If the run from i first fails on arriving at j, no depot strictly between i and j can succeed — prove that, and you get a greedy sweep that examines each depot once.",
+    "Sweep once accumulating the running total of collected minus consumed, plus a separate accumulator for the whole circle. Whenever the running total goes negative, set the candidate start to the next depot and reset the running total to zero. At the end, report the candidate if the whole-circle total is non-negative, else negative one. Why does the proof that intermediate depots also fail depend on the tank starting empty?",
+    "Frame: up to 1e5 depots in a circle with a collected amount and a consumed amount each; start with an empty tank at a depot of your choice and complete the circle without going negative. Output is a starting index or negative one, and at most one valid start exists. Brute: simulate from each start; O(n^2). Bottleneck: consecutive candidate starts re-walk overlapping stretches and re-add the same net differences, and when a start at i fails on reaching j, every candidate between i and j is simulated separately and fails identically. Lift: two observations. First, some start works exactly when the total collected is at least the total consumed, because the tank over a full circle changes by that difference regardless of where you begin. Second, if the run from i first goes negative on arriving at j, then for any k strictly between i and j the run from k also goes negative by j — because the tank arriving at k from i was non-negative, so starting fresh at k gives a running total no larger than the one from i at every subsequent depot. That is the exchange-style argument, and it uses the empty start directly: the run from i had a non-negative surplus at k, so it dominates the run from k pointwise. Therefore the next candidate after a failure at j is j itself, and each depot is examined once. Invariant: the running total from the current candidate is always non-negative, and every skipped depot has been proved to fail. Verify: one depot with enough and with too little fuel, totals exactly equal, all differences zero, a valid start at the last depot, and totals short by one giving negative one. One pass, O(n) time, O(1) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "The net differences form a running total and the answer is related to where that running total bottoms out, so a prefix array plus a minimum genuinely solves this. It is a correct linear solution that hides the local-choice argument the problem is meant to teach."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "A candidate start and a current position sweeping around the circle looks exactly like a window whose left edge jumps forward on failure, and the code shape matches. Nothing about a contiguous range with a property is being maintained — the left edge jump is a proof-driven skip, not a shrink."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Choose a starting point to optimize a feasibility condition over a sequence' can be written as a state over positions, and the circular structure suggests doubling the array and sweeping. It is far more machinery than a provable local rule needs."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The circular arrangement suggests doubling the array and sweeping a window, and the running-total structure suggests prefix aggregation; the fact that a single provable skip rule settles it is not visible in the wording.",
+  "edgeCases": [
+    "a single depot with enough fuel",
+    "a single depot with too little fuel",
+    "total fuel exactly equal to total consumption",
+    "all collected and consumed amounts equal",
+    "the only valid start being the last depot",
+    "total fuel short by one unit",
+    "100,000 depots with a single tight point"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Up to 100,000 stations sit in a circle. At each you gain a known amount and moving to the next costs a known amount. Starting empty at a station of your choice and travelling the whole circle in order, your balance may never go negative. Report a valid starting station or negative one; at most one exists. Simulating from every station is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A delivery van runs a fixed loop of 100,000 stops. At each stop it picks up a known number of parcels and uses up a known number on the leg to the next stop. The van starts the loop empty, must complete the entire loop, and can never be short of parcels on any leg. Exactly one stop can serve as a valid starting point, if any can. Identify it, or report that none works. Simulating the loop from every stop is far too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

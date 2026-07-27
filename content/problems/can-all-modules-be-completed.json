@@ -1,0 +1,71 @@
+{
+  "problemId": "can-all-modules-be-completed",
+  "sourceRef": "https://leetcode.com/problems/course-schedule/",
+  "title": "Can Every Module Be Completed",
+  "statement": "There are up to 2,000 modules numbered from zero, and up to 5,000 requirement pairs. A pair saying that module A requires module B means B must be completed strictly before A. Decide whether an order exists in which every module can be completed. Requirements may be listed in any order, a module may have many requirements or none, and the same pair may appear more than once.",
+  "primaryPattern": "topological_sort",
+  "secondary": [
+    "dfs"
+  ],
+  "redundancy": "reprocessing_dependencies",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "union_find",
+    "tree_basics",
+    "dfs_traversal",
+    "topological_sort"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 2,000 modules and up to 5,000 directed requirement pairs. Output: a boolean. A valid order exists exactly when the requirements contain no circular chain, so the question is really about cycles.",
+    "brute": "Repeatedly sweep all modules looking for one whose requirements are all already completed, mark it completed, and start the sweep again. Stop when a full sweep completes nothing. O(modules times requirements) per round over up to O(modules) rounds.",
+    "bottleneck": "Every round rescans every module and re-checks every one of its requirements, including modules whose requirements are still obviously unmet and modules already completed, so the same requirement pair is examined once per round rather than once per satisfaction.",
+    "lift": "Count, for each module, how many of its requirements are still outstanding. Keep a queue of modules whose count has reached zero; completing a module decrements the counts only of the modules that actually depend on it. That is a topological ordering built by counting incoming requirements.",
+    "invariant": "A module's outstanding count always equals the number of its requirements not yet completed; therefore a module enters the queue exactly once, at the moment its last requirement is satisfied.",
+    "verify": "No requirements at all, which is always satisfiable; a single module requiring itself, which is not; two modules requiring each other; a long chain; duplicate pairs, which must not double-count unless the counting is consistent; 2,000 modules with 5,000 pairs. Each module is queued once and each pair examined once, so O(modules plus requirements)."
+  },
+  "hints": [
+    "Restate the question without the word 'order'. Under exactly what condition on the requirement pairs does a valid completion order fail to exist?",
+    "You have a working approach that repeatedly finds a completable module. Describe what one round of it inspects.",
+    "Each round rescans every module and re-checks all of its requirements, including modules already completed and modules whose requirements plainly are not met yet. The same pair is examined once per round.",
+    "Name the waste: re-examining dependency relationships that have not changed, once per round, when a relationship only becomes relevant at the single moment its source is completed.",
+    "Track, per module, how many requirements remain outstanding — that is, its in-degree in the requirement graph — and process modules whose count hits zero. This is a topological ordering built by counting.",
+    "Build, for each module, the list of modules that depend on it, and its count of outstanding requirements. Queue every module with a count of zero. Pop a module, mark it completed, and decrement the counts of its dependents, queueing any that reach zero. The answer is whether the number completed equals the number of modules. Why does a leftover module prove a circular chain?",
+    "Frame: up to 2,000 modules and 5,000 directed requirement pairs; output is a boolean. A valid order exists exactly when there is no circular chain of requirements, so this is cycle detection in a directed graph. Brute: repeatedly sweep for a module whose requirements are all done, complete it, and restart; O(modules times requirements) per round over up to O(modules) rounds. Bottleneck: each round re-examines every requirement pair, including those of already-completed modules and those obviously unmet, when a pair only matters at the single instant its source is completed. Lift: a topological ordering driven by outstanding-requirement counts. Build the dependents list and the count of unmet requirements for each module, queue the zero-count modules, and on completing a module decrement only its dependents' counts. Invariant: a module's count always equals the number of its requirements not yet completed, so it is queued exactly once, at the moment its last requirement is satisfied. If some module is never queued, its count never reached zero, which means it is waiting on a chain that ultimately waits on it — a circular chain. So the answer is whether the completed count equals the module count. Verify: no requirements is always satisfiable, a module requiring itself is not, two mutually requiring modules are not, a long chain is, and duplicate pairs must be counted consistently — counting each listed pair, including duplicates, is fine as long as the decrement happens once per listed pair too. Each module is queued once and each pair examined once: O(modules plus requirements) time and space. The traversal-based alternative marks nodes in progress and finished, and reports a cycle on meeting an in-progress node."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "Cycle detection with three-colour marking is the standard traversal answer and it solves this exactly. It is genuinely equivalent here — the interesting distinction is that the counting version also produces a valid order as a by-product, and generalizes to the version that asks for the order."
+    },
+    {
+      "mechanism": "union_find",
+      "temptingBecause": "'Detect a cycle' plus grouping vocabulary makes a merge structure feel right, and it is the correct cycle detector for undirected edges. These requirements are directed, and a merge structure cannot see direction, so it would report a cycle for two independent requirements sharing a module."
+    },
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "The zero-count queue is processed exactly like a breadth-first frontier, so the code looks identical. What distinguishes it is that a node is released by its count reaching zero rather than by first being reached, which is the whole point."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "no requirements at all",
+    "a module that requires itself",
+    "two modules requiring each other",
+    "a long chain of requirements",
+    "the same requirement pair listed twice",
+    "2,000 modules with 5,000 pairs",
+    "several disconnected groups of modules"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 2,000 tasks and up to 5,000 ordered pairs are given, each pair saying one task must be finished before another. Decide whether some order lets every task be finished. Repeatedly scanning for a ready task and restarting is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A build system has up to 2,000 targets and up to 5,000 declared dependencies, each stating that one target must be built before another. Dependencies are declared in arbitrary order and some are declared twice. Before starting a build, the tool must decide whether the declarations admit any workable build order at all. Repeatedly scanning all targets for one whose inputs are ready, and restarting after each success, is too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "problemId": "fewest-bookings-to-drop",
+  "sourceRef": "https://leetcode.com/problems/non-overlapping-intervals/",
+  "title": "Fewest Bookings To Drop",
+  "statement": "Up to 100,000 bookings are given, each with a start time and an end time as integers, in no particular order. Two bookings conflict when their time spans overlap in more than a single instant; a booking that ends exactly when another starts does not conflict with it. Report the smallest number of bookings that must be dropped so that no two of the survivors conflict. You are asked only for the count, not for which bookings to drop.",
+  "primaryPattern": "greedy",
+  "secondary": [
+    "sorting_preprocess"
+  ],
+  "redundancy": "reevaluating_safe_local_choice",
+  "phase": 3,
+  "prerequisites": [
+    "sorting_with_keys",
+    "sorting_preprocess",
+    "greedy_exchange"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 start-end pairs in arbitrary order, touching endpoints do not conflict. Output: one count. Dropping the fewest is the same as keeping the most, and the second phrasing is the one that can be built up.",
+    "brute": "Try every subset of bookings, check each for internal conflicts, and keep the largest conflict-free one; the answer is the total minus its size. Exponential in the number of bookings.",
+    "bottleneck": "It re-evaluates enormous families of subsets that share the same prefix of accepted bookings, re-checking conflicts among bookings whose mutual compatibility was already established, and it re-explores completions of prefixes that were already worse than a completion found earlier.",
+    "lift": "Sort by end time and sweep, keeping every booking that starts at or after the last kept booking's end. The exchange argument makes this safe: among any set of compatible bookings, replacing the first-ending one with the globally earliest-ending compatible booking never reduces the count.",
+    "invariant": "After processing a prefix of the end-sorted bookings, the number kept is the maximum possible over that prefix, and the last kept booking ends as early as any optimal solution over that prefix could end.",
+    "verify": "No bookings, giving zero; one booking; all bookings identical, where all but one must be dropped; bookings that never conflict, giving zero; a booking ending exactly when another starts; a long booking containing many short ones; 100,000 bookings. Sorting dominates at O(n log n)."
+  },
+  "hints": [
+    "Restate the goal in its positive form: dropping the fewest is the same as keeping the most of what? Say which of the two phrasings you can build up one decision at a time.",
+    "You have an approach that considers combinations of bookings to keep. Say what two combinations sharing their first several accepted bookings have in common.",
+    "They share all the compatibility checks among those accepted bookings, which get re-verified for every combination, and completions of a prefix already known to be inferior get explored anyway.",
+    "Name the waste: re-evaluating whole families of orderings and combinations when the correct local decision at each step is the same in all of them and could be settled once.",
+    "If you can prove that one particular local choice is never regretted, you can take it and never revisit it. That is a greedy solution, and the whole difficulty is finding the ordering under which the local choice is provably safe.",
+    "Sort by end time. Sweep, keeping a booking whenever its start is at or after the last kept booking's end. The answer is the total minus the number kept. Now produce the exchange argument: given any optimal set, swap its earliest-ending member for the globally earliest-ending compatible booking and show the set stays valid and the same size.",
+    "Frame: up to 1e5 start-end pairs in arbitrary order, touching endpoints do not conflict; output is the minimum number to drop. Rephrase as keeping the maximum number of mutually compatible bookings, which is the form that admits an incremental construction. Brute: enumerate subsets and test each; exponential. Bottleneck: combinations sharing an accepted prefix re-verify the same compatibilities and re-explore completions of prefixes already known to be inferior. Lift: greedy by earliest end time. Sort by end, sweep, and keep a booking whenever its start is at or after the last kept end. Invariant: after processing a prefix of the end-sorted list, the count kept is the maximum achievable over that prefix, and the last kept booking ends no later than the last booking of any optimal solution over that prefix. The exchange argument: take any optimal set and let x be its earliest-ending member; let g be the globally earliest-ending booking. Then g ends no later than x, so replacing x with g leaves every remaining member still compatible, and the size is unchanged — so some optimal solution contains g, and the argument recurses on the bookings starting at or after g's end. Sorting by start instead breaks this, since a long booking starting early can block many short ones. Verify: no bookings gives zero, all-identical bookings drop all but one, disjoint bookings drop none, a booking ending exactly when another starts must be kept, and a long booking containing many short ones must itself be dropped. Time O(n log n) dominated by the sort, space O(1) beyond it."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Choose a maximum-value subset with compatibility constraints' is the weighted-interval-scheduling DP, which is correct and standard. It costs an extra log factor and, more importantly, it is what you must fall back on the moment the bookings carry different values — so the distinction is worth being precise about."
+    },
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Sorting is genuinely the first step and interval problems are the reflex home of sorting. Sorting alone answers nothing; the content is which key to sort by and why the resulting local choice is safe."
+    },
+    {
+      "mechanism": "heap",
+      "temptingBecause": "Tracking which bookings are currently active suggests a priority queue keyed on end time, which is the right tool for counting overlaps. Counting overlaps is a different question from selecting a maximum compatible subset."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "no bookings",
+    "a single booking",
+    "all bookings identical",
+    "bookings that never conflict",
+    "a booking ending exactly when another starts",
+    "one long booking containing many short ones",
+    "100,000 bookings all overlapping at one instant"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 100,000 intervals are given in arbitrary order. Two intervals conflict when they overlap in more than a single point; touching endpoints do not conflict. Report the fewest intervals that must be removed so no two survivors conflict. Only the count is needed. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A single recording studio receives 100,000 session requests for one day, each with a requested start and end, submitted in no order. Only one session can run at a time, though a session may begin the instant another finishes. The manager must cancel as few requests as possible so the remaining schedule is conflict-free, and needs only the number of cancellations. Trying combinations of requests to keep is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

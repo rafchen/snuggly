@@ -1,0 +1,68 @@
+{
+  "problemId": "capture-fully-enclosed-regions",
+  "sourceRef": "https://leetcode.com/problems/surrounded-regions/",
+  "title": "Capture The Fully Enclosed Regions",
+  "statement": "A grid of up to 200 by 200 cells is given, each cell marked open or filled. Consider each maximal group of open cells connected through shared sides. A group is enclosed when none of its cells lies on the outer border of the grid. Change every cell of every enclosed group to filled, leaving all other cells alone, and report the modified grid. Groups touching the border in even one cell survive entirely.",
+  "primaryPattern": "dfs",
+  "secondary": [],
+  "redundancy": "retraversing_visited_regions",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "flood_fill"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a grid of up to 200 by 200 cells, so at most 40,000 cells, four-way connectivity. Output: the modified grid. A group survives if and only if it touches the border, which is a property of the whole group, not of a single cell.",
+    "brute": "For each open cell, explore its group and check whether any cell of that group lies on the border; if not, fill the group. Each cell launches its own exploration, so a group of k cells is explored k times: O(cells squared).",
+    "bottleneck": "The same group is traversed once for each of its cells, and each traversal re-derives the identical fact about whether that group touches the border — a fact that does not change and does not depend on which cell the traversal started from.",
+    "lift": "Invert the question. Instead of asking each group whether it reaches the border, start from the border and mark everything reachable; whatever open cell remains unmarked is by definition enclosed. One depth-first sweep from the border cells does it.",
+    "invariant": "After the border sweep, an open cell is marked if and only if a chain of side-adjacent open cells connects it to the border; therefore the unmarked open cells are exactly those to be filled.",
+    "verify": "A grid with no open cells; a grid entirely open, where nothing is filled because everything touches the border; a single row or column, where every cell is on the border; one enclosed cell in the centre; an open group touching the border at exactly one cell; a 200 by 200 grid. Time and space O(cells)."
+  },
+  "hints": [
+    "The survival rule is about a whole group, not about a single cell. Restate it as a property of individual cells instead — a cell survives exactly when what is true of it?",
+    "You have an approach that explores each group and checks it. Take a group of a thousand cells and say how many times your approach walks it.",
+    "It walks the group once from each of its thousand cells, and every one of those walks concludes the same thing about whether the group touches the border.",
+    "Name the waste: re-traversing the same region repeatedly to re-derive a property that is fixed for the whole region and does not depend on the starting cell.",
+    "Turn the question around and start where the answer is already known. Every open cell on the border obviously survives, so run a depth-first search outward from the border cells and mark everything it reaches; the unmarked open cells are exactly the enclosed ones.",
+    "Sweep the four borders. From every open border cell, run a depth-first search marking every open cell reachable through shared sides. Then sweep the whole grid: unmarked open cells become filled, marked cells revert to open. Why is starting from the border strictly better than starting from each group and testing it?",
+    "Frame: a grid of up to 200 by 200 cells with four-way connectivity; enclosed groups become filled, border-touching groups survive intact. Survival is a property of a whole group. Brute: explore each cell's group and test for a border cell; a group of k cells is explored k times, so O(cells squared). Bottleneck: repeated traversals of the same region re-derive the identical border-touching fact, which is fixed for the region and independent of the starting cell. Lift: invert the search direction. Border-adjacent open cells are known survivors, so one depth-first search seeded from every open border cell marks exactly the survivors. Invariant: after the sweep, an open cell is marked exactly when a chain of side-adjacent open cells links it to the border, so the unmarked open cells are precisely the enclosed ones. Then one final pass fills the unmarked and restores the marked. Verify: no open cells, an entirely open grid where nothing is filled, a single row or column where every cell is on the border, one enclosed centre cell, and a group touching the border at exactly one cell. Time and space O(cells). Recursion depth can reach 40,000, so an explicit stack is safer than deep recursion. Using a temporary third marker rather than a separate visited array keeps the space to the grid itself."
+  ],
+  "distractors": [
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "Expanding outward from the border in layers marks exactly the same cells and is equally correct. No distance is required, so the level structure is unused — either traversal order works and the choice is stylistic."
+    },
+    {
+      "mechanism": "union_find",
+      "temptingBecause": "Merging each open cell with its open neighbours and with a special outside node, then filling every group not attached to the outside, is a genuine and elegant solution. It is more machinery than a static one-shot grid needs."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "The recursion that walks a region looks like the try-and-undo pattern, and the temporary marker reinforces that impression. Nothing is undone on the way out — the marker is permanent within the sweep, which is what keeps it linear."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The natural reading is 'find the enclosed regions', which sends the search inward from every region; the efficient direction is inward-out from the border, and nothing in the wording suggests starting there.",
+  "edgeCases": [
+    "a grid with no open cells",
+    "a grid that is entirely open",
+    "a single-row grid",
+    "a single-column grid",
+    "one enclosed cell in the centre",
+    "a group touching the border at exactly one cell",
+    "a 200 by 200 grid with a maze-like open region"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "In a grid of up to 200 by 200 open and filled cells, a maximal group of side-connected open cells is enclosed when none of its cells lies on the outer border. Fill every enclosed group and leave the rest unchanged. Exploring each group from each of its cells is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A foundry scans a 200 by 200 cross-section of a cast part, marking each square as metal or void. A void pocket that has no square on the outer edge of the scan is a sealed cavity and must be recorded as metal for the density calculation; void pockets that reach the outer edge are surface features and stay as they are. Produce the corrected cross-section. Tracing each pocket from each of its squares is far too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

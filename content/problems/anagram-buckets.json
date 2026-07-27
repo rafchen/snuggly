@@ -1,0 +1,64 @@
+{
+  "problemId": "anagram-buckets",
+  "sourceRef": "https://leetcode.com/problems/group-anagrams/",
+  "title": "Bucket The Rearrangements",
+  "statement": "Given up to 10,000 lowercase words, each at most 100 letters long, collect them into buckets so that two words share a bucket exactly when one is a rearrangement of the other's letters. Every input word lands in exactly one bucket, and a word repeated in the input appears twice in its bucket. Return the buckets in any order and the words within a bucket in any order.",
+  "primaryPattern": "hashing",
+  "secondary": [
+    "sorting_preprocess"
+  ],
+  "redundancy": "reseeking_membership",
+  "phase": 1,
+  "prerequisites": [
+    "hashing",
+    "defaultdict",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 10,000 words of length up to 100. Output: a partition into rearrangement classes. Total input characters are at most 1e6, so a pass proportional to total characters is the target.",
+    "brute": "For each word, compare it against the representative of every bucket built so far by checking whether their letter counts match. O(m^2 * L) where m is the word count.",
+    "bottleneck": "Each comparison recomputes both words' letter tallies from scratch, and every word is re-tallied once per existing bucket it is tested against, so the same word's 26-slot count is rebuilt hundreds of times.",
+    "lift": "Compute one canonical fingerprint per word — its sorted letters, or its 26-slot count rendered as a string — and use it as a hash map key. Bucket membership becomes a single map lookup.",
+    "invariant": "Two words produce equal fingerprints if and only if they are rearrangements of each other, so after processing k words the map's key set is exactly the set of rearrangement classes seen so far.",
+    "verify": "Empty input; one word; all 10,000 words identical, giving one bucket; 10,000 pairwise-distinct fingerprints, giving 10,000 buckets; the empty string as a word."
+  },
+  "hints": [
+    "Note the two sizes separately: at most 10,000 words but each word is at most 100 letters. Which of those two numbers bounds the real work?",
+    "You have a working approach that puts each word somewhere. What is it doing at the moment a new word arrives, and how does that cost grow as buckets accumulate?",
+    "For each new word you test it against one representative of every existing bucket. That means a word near the end of the input gets its letters counted over and over, once per bucket already open.",
+    "The repeated operation is: re-deriving a word's letter tally, and then re-searching the collection of buckets to ask whether one matching that tally already exists.",
+    "Give each word a single canonical label that is identical for rearrangements and different otherwise, then let a hash map take you straight to the right bucket.",
+    "Sorted letters make a valid label: 'stop' and 'pots' both become 'opst'. A 26-length count vector rendered as a string works too and is cheaper for long words. Map label to the list of words carrying it. What property of the label is doing the actual work here?",
+    "Frame: at most 1e4 words of length at most 100, so a pass proportional to total characters, about 1e6, is the target. Brute: compare each word against one representative per existing bucket, O(m^2 L). Bottleneck: each comparison rebuilds both letter tallies from scratch and the bucket list is re-searched linearly for every arriving word. Lift: compute one canonical fingerprint per word — sorted letters, or the 26-slot count as a string — and use a hash map from fingerprint to bucket. Invariant: fingerprints are equal exactly when the words are rearrangements, so the map's key set is always exactly the classes seen so far. Verify: empty input, one word, 10,000 identical words giving one bucket, 10,000 distinct words giving 10,000 buckets, and the empty word. Cost is O(total characters) with the count-vector label, or O(total characters times log of word length) if you sort each word."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Sorting a word's letters is genuinely part of the answer, which makes 'sorting' feel like the mechanism rather than what it actually is: a key-construction step feeding the real mechanism."
+    },
+    {
+      "mechanism": "trie",
+      "temptingBecause": "A pile of strings that need grouping is the classic prefix-tree setup, and the word 'group' plus the word 'words' triggers it — but rearrangements share no prefix at all, so a trie separates exactly the words that belong together."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "empty input list",
+    "single word",
+    "all words identical",
+    "every word in its own bucket",
+    "the empty string as one of the words",
+    "10,000 words of 100 letters each, all rearrangements of one another"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "You receive up to 10,000 lowercase words, each up to 100 characters. Partition them so that two words are in the same part exactly when they use the same multiset of letters. Return the parts in any order. Duplicated input words appear twice. Name the mechanism and state the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A tile factory produces 10,000 trays, each holding up to 100 lettered tiles. Two trays are considered interchangeable if a worker could turn one into the other purely by rearranging tiles, without adding or removing any. Group the trays into interchangeability classes so the warehouse can stack them together. Trays are numbered and identical trays are common. What mechanism does this, and what work is it saving?"
+    }
+  ]
+}

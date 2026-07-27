@@ -1,0 +1,66 @@
+{
+  "problemId": "slowest-rate-that-still-finishes",
+  "sourceRef": "https://leetcode.com/problems/koko-eating-bananas/",
+  "title": "Slowest Rate That Still Finishes In Time",
+  "statement": "There are up to 10,000 piles, each holding a known count of up to one billion items. A worker processes one pile per hour at a chosen constant rate: in a given hour they remove up to that many items from a single pile, and if the pile holds fewer, the hour is still consumed and they move on. Given an hour budget at least as large as the number of piles, find the smallest constant rate that lets the worker clear every pile within the budget. The rate is a positive whole number.",
+  "primaryPattern": "binary_search_answer",
+  "secondary": [],
+  "redundancy": "retesting_monotone_feasibility",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "binary_search_array",
+    "binary_search_answer"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 10,000 pile sizes each up to 1e9, plus an hour budget at least the pile count. Output: the smallest whole rate that fits the budget. The answer lives in the range 1 to the largest pile, which is a space of size 1e9 — far larger than the input.",
+    "brute": "Try every rate from 1 upward; for each, total the hours needed by rounding each pile's size up to a multiple of the rate, and return the first rate that fits. O(max pile * number of piles), up to 1e13.",
+    "bottleneck": "It re-evaluates feasibility for rate after rate, each evaluation costing a full pass over all piles, even though every rate below the answer fails and every rate above it succeeds — so the vast majority of those full passes re-confirm an outcome already implied by an earlier one.",
+    "lift": "Feasibility is monotone in the rate: if a rate works, every larger rate works. That is precisely the precondition for binary search on the answer, over the value range 1 to the largest pile.",
+    "invariant": "The smallest feasible rate always lies within the current lo-to-hi range: hi is always a rate known to be feasible or the upper bound, and lo minus one is always known infeasible.",
+    "verify": "One pile; budget exactly equal to the pile count, forcing the rate to be the largest pile; budget enormous, giving rate 1; all piles equal; a pile of one billion; 10,000 piles. About 30 feasibility checks at O(number of piles) each, so O(n log max) time and O(1) space. Hour totals need 64-bit arithmetic."
+  },
+  "hints": [
+    "Two magnitudes are stated and they are wildly different: at most 10,000 piles but pile sizes up to a billion. Which of those two numbers bounds the set of possible answers?",
+    "You have a working approach that tries candidate rates. Describe the cost of testing a single candidate, and then describe how you choose the next candidate.",
+    "Testing one rate costs a full pass over the piles. You then test the next rate, and the next, walking upward through a billion possibilities one at a time.",
+    "Before naming a tool, establish the key property: if a given rate clears the piles in time, what can you say about every larger rate? And about every smaller one if a rate fails?",
+    "That yes/no answer flips exactly once as the rate increases, and never flips back. A monotone predicate over an ordered candidate space is what binary search on the answer needs.",
+    "Binary search the rate over the range 1 to the largest pile. For a candidate rate, the hours needed are the sum over piles of that pile's size divided by the rate, rounded up. Keep the smallest rate that fits and shrink the range accordingly. Why is the search space the rate rather than an index into the piles?",
+    "Frame: up to 1e4 piles of up to 1e9 items each, plus an hour budget at least the pile count; output is the smallest whole rate that fits. Note the candidate answers number about 1e9 while the input is only 1e4 — the answer is far bigger than the data, which is itself the signal. Brute: try rates 1, 2, 3, … computing total hours by rounding each pile up to a multiple of the rate; O(max pile times pile count), up to 1e13. Bottleneck: each candidate costs a full pass over the piles, and those passes re-confirm an outcome the ordering already implies, since every rate below the answer fails and every rate at or above it succeeds. Lift: feasibility is monotone in the rate — a faster rate never turns a success into a failure — so binary search the value range 1 to the largest pile. Invariant: the smallest feasible rate always lies within lo to hi, with hi always feasible or the upper bound and lo minus one always infeasible. Verify: a single pile; a budget equal to the pile count, forcing the rate up to the largest pile; an enormous budget, giving rate 1; all piles equal; a pile of 1e9. Around 30 iterations, each a linear feasibility pass, so O(n log max) time and O(1) space, with 64-bit hour totals since 1e4 piles can each need many hours."
+  ],
+  "distractors": [
+    {
+      "mechanism": "binary_search_array",
+      "temptingBecause": "The mechanism name and the code are all but identical, which is exactly why this pair is confused so often. The discriminator is that the value being searched for is not an element of the input at all — it is an output value being probed for feasibility."
+    },
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "'Smallest rate that still works' sounds like something you could construct directly, for instance from the total item count divided by the budget. That estimate ignores the one-pile-per-hour rule and is wrong whenever the piles are uneven."
+    },
+    {
+      "mechanism": "heap",
+      "temptingBecause": "Repeatedly attacking the largest remaining pile is the natural simulation, and a priority queue is the tool for that. It simulates the process rather than deciding the rate, and the rate is what is being asked for."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The huge pile sizes look like the hard dimension, but they are the answer's search space rather than the workload; the small pile count is the one that bounds a feasibility check.",
+  "edgeCases": [
+    "a single pile",
+    "budget exactly equal to the number of piles",
+    "budget far larger than needed, giving rate 1",
+    "all piles the same size",
+    "a single pile of one billion items",
+    "10,000 piles of one item each"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "You have up to 10,000 piles, each with up to a billion items, and an hour budget at least as large as the number of piles. Each hour you work on one pile at a fixed rate, removing up to that many items; a partly emptied pile still consumes the whole hour. Find the smallest fixed rate that clears everything within the budget. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A print shop has up to 10,000 job queues, each holding up to a billion pages. A press runs for whole shifts; in one shift it works a single queue and prints at most its rated speed in pages, and a queue that runs out mid-shift still burns the whole shift. The shop has a fixed number of shifts before a deadline, at least as many as there are queues. What is the slowest press rating that still meets the deadline? Trying every rating is hopeless. What mechanism, and what waste does it eliminate?"
+    }
+  ]
+}

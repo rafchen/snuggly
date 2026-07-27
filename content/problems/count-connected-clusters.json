@@ -1,0 +1,67 @@
+{
+  "problemId": "count-connected-clusters",
+  "sourceRef": "https://leetcode.com/problems/number-of-provinces/",
+  "title": "Count The Clusters",
+  "statement": "Up to 2,000 items are numbered from zero upward. A symmetric table records, for every pair, whether the two items are directly linked; an item is always linked to itself. Two items belong to the same cluster when a chain of direct links connects them, however long. Report how many clusters exist. The table is given in full, so it holds up to four million entries, and links may be dense or sparse.",
+  "primaryPattern": "union_find",
+  "secondary": [
+    "dfs"
+  ],
+  "redundancy": "remerging_overlapping_groups",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "union_find"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a symmetric link table over up to 2,000 items, so up to 4e6 entries. Output: the number of connected clusters. Reading the table alone costs 4e6, so the algorithm must be about that, not more.",
+    "brute": "Start with every item in its own cluster and repeatedly sweep the whole table: whenever a link joins two items in different clusters, relabel every member of one cluster to the other's label. Repeat until a sweep changes nothing. Each relabel touches every member, so O(n^3) in the worst case.",
+    "bottleneck": "Merging two clusters relabels every member of one of them, and a chain of merges relabels the same items over and over — an item in a cluster that grows by one member at a time is rewritten once per merge, and the repeated full sweeps re-examine links that were already resolved.",
+    "lift": "Represent each cluster by a single representative and merge by pointing one representative at the other. A union-find structure with path compression and union by size makes each merge and each membership question effectively constant time.",
+    "invariant": "Every item points, directly or through a chain, at exactly one representative, and two items share a representative if and only if some sequence of processed links connects them.",
+    "verify": "One item, giving one cluster; no links beyond the self-links, giving n clusters; every item linked to every other, giving one; a single long chain of links; 2,000 items with a dense table. One pass over the upper triangle of the table with near-constant merges gives O(n^2) overall."
+  },
+  "hints": [
+    "Two numbers matter: 2,000 items but four million table entries. What is the floor on any algorithm's cost, given that the table is handed to you in full?",
+    "You have a working approach that assigns cluster labels and fixes them up. Describe what happens the moment you discover a link between two items that currently carry different labels.",
+    "Every member of one cluster is relabelled. Do that repeatedly while a cluster grows one member at a time and the same items get rewritten again and again, and the sweeps re-examine links already resolved.",
+    "Name the waste: repeatedly rewriting the membership of groups that are being merged, and re-checking links whose grouping consequence was already absorbed.",
+    "Do not store membership at all. Store, for each item, a pointer toward a representative of its group, and merge two groups by redirecting one representative at the other. That is union-find, and with path compression it makes the group question almost free.",
+    "Give every item a parent pointer to itself. For each linked pair, find both representatives by following parents to the top, and if they differ, attach the smaller group's representative under the larger one. Compress the paths you walk. The answer is the number of items that are their own representative. Why does attaching by size, rather than arbitrarily, matter for the running time?",
+    "Frame: a symmetric link table over up to 2,000 items with up to 4e6 entries; output is the number of connected clusters. Reading the table costs 4e6, so that is the target. Brute: label each item, then sweep repeatedly relabelling whole clusters on every cross-cluster link until nothing changes; relabelling touches every member, giving up to O(n^3). Bottleneck: each merge rewrites every member of one group, so an item in a slowly growing cluster is rewritten once per merge, and the repeated sweeps re-examine links already resolved. Lift: union-find. Each item holds a parent pointer; a group is identified by the representative reached by following parents to a self-pointing node. Merging is one pointer redirect rather than a mass rewrite. Invariant: every item reaches exactly one representative, and two items share a representative exactly when some processed link chain connects them. Union by size keeps trees shallow — attaching the smaller tree under the larger bounds depth logarithmically — and path compression flattens the walked path, together giving effectively constant amortized cost. Verify: a single item gives one cluster, no links gives n clusters, a complete table gives one cluster, and a single long chain still merges correctly. Sweep the upper triangle of the table once: O(n^2) overall with near-constant merges, O(n) space. Counting self-representatives at the end gives the answer without a second pass."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "'Connected components' is depth-first search's home turf and a flood fill over this table is correct and simple. The discriminator is whether the graph is static and counted once, in which case a traversal is fine, or whether links arrive over time and connectivity is queried repeatedly."
+    },
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "Level-by-level expansion also finds every component correctly, and 'reach everything connected to this item' sounds like a frontier expansion. Distance plays no role here, so the level structure buys nothing."
+    },
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "Grouping items by a label stored in a map feels like the natural bookkeeping for cluster membership. Maintaining those groups under merges is exactly the operation that turns quadratic, which is the waste being removed."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a single item",
+    "no links beyond self-links",
+    "every item linked to every other",
+    "one long chain of links",
+    "two equal-sized clusters",
+    "2,000 items with a fully dense table"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 2,000 items are given with a symmetric table saying which pairs are directly linked. Items connected through any chain of links belong to the same cluster. Report the number of clusters. Repeatedly relabelling whole clusters is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A research institute has 2,000 staff and a full table of who has co-authored with whom, symmetric and including each person with themselves. A research group is any maximal set of people connected through co-authorship chains, however indirect. Report how many groups exist. Rewriting group memberships each time two groups turn out to be connected is far too slow. What mechanism applies, and what wasted work does it eliminate?"
+    }
+  ]
+}

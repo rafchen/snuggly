@@ -1,0 +1,68 @@
+{
+  "problemId": "triples-summing-to-zero",
+  "sourceRef": "https://leetcode.com/problems/3sum/",
+  "title": "Distinct Triples Summing To Zero",
+  "statement": "From a list of up to 3,000 integers, report every set of three values that adds to zero. Two answers that use the same three values are the same answer even if they came from different positions, so the output must contain no repeated value-triple. Values repeat freely in the input and may be negative. Order within a triple and order among triples do not matter. Cubic time is too slow at this size.",
+  "primaryPattern": "two_pointers_opposite",
+  "secondary": [
+    "sorting_preprocess"
+  ],
+  "redundancy": "recomparing_sorted_pairs",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "two_pointers_opposite",
+    "sorting_preprocess"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 3,000 integers, any sign, duplicates allowed. Output: the set of distinct value-triples summing to zero. n at 3,000 means n^2 is fine at nine million but n^3 at 2.7e10 is not.",
+    "brute": "Three nested loops over all index triples, testing the sum and deduplicating the surviving triples afterwards. O(n^3).",
+    "bottleneck": "After the outer two values are chosen, the innermost loop rescans the whole remainder to look for one specific missing value, and it repeats that full scan for every one of the n^2 outer choices even though the collection it scans never changes.",
+    "lift": "Sort once. Then fix the smallest of the three and let two indices converge from the ends of the remaining suffix: the sum is monotone in each pointer's movement, so each pair-search costs one linear sweep rather than a scan per candidate.",
+    "invariant": "During the inner sweep with the outer value fixed, every pair strictly outside the current left-right span has already been ruled out — a pair was discarded only when its sum was provably too small with the left index, or too large with the right.",
+    "verify": "Fewer than three elements; three zeros; all values positive, yielding nothing; a value repeated 3,000 times; the triple straddling duplicates, which is where deduplication is tested. Sorting costs n log n and the double sweep costs n^2."
+  },
+  "hints": [
+    "The list holds at most 3,000 entries. Compute what n squared and n cubed each cost at that size, and note which one is affordable. That single arithmetic step decides the shape of your answer.",
+    "You have a triple loop. Fix the two outer choices in your head and describe what the innermost loop is actually looking for.",
+    "With two values pinned, the third is completely determined — you need one specific number. Yet you scan the entire remaining list to find it, and you do that scan for every one of the millions of outer pairs.",
+    "Two repetitions: you rescan an unchanging collection to locate a determined value, and you re-derive the same triples in different orders and then have to throw the duplicates away.",
+    "Order the values once up front. Sorted data lets two indices converge from opposite ends of a range, so the search for the completing value becomes a single sweep instead of a scan per candidate.",
+    "Sort the list. For each index i, run a two-pointer sweep over the suffix after i: if the three values sum too low, advance the left index; too high, retreat the right index; exactly zero, record and step both inward past their duplicates. Also skip an outer i whose value equals the previous one. Why does skipping duplicates at both levels give you the distinct-triple requirement for free?",
+    "Frame: up to 3,000 integers, output is the set of distinct value-triples summing to zero, and n at 3,000 makes n^2 affordable and n^3 not. Brute: three nested loops plus a deduplication pass, O(n^3). Bottleneck: with two values fixed the third is determined, yet the inner loop scans the whole remainder to find it, repeating that scan across all n^2 outer pairs of an unchanging collection. Lift: sort once, then for each fixed smallest value converge two indices from the ends of the suffix. Sortedness makes the pair sum monotone under each pointer's motion, so one linear sweep replaces the scan-per-candidate. Invariant: everything outside the current left-right span is already ruled out, because a pointer moves only when its current pairing is provably on the wrong side of zero. Deduplication comes free: skip an outer value equal to its predecessor, and after recording a hit, step both inner pointers past their equal neighbours. Verify: fewer than three elements, three zeros, all-positive input, a value repeated 3,000 times, and triples straddling duplicates. Cost is O(n log n) for the sort plus O(n^2) for the sweeps, with O(1) extra space beyond the output."
+  ],
+  "distractors": [
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "With two values fixed the third is a lookup, so a set-based inner test is the obvious upgrade from the triple loop — and it does reach n squared. It just leaves you fighting duplicate triples by hand, which is the part sorting hands you for free."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "'Report every combination of three' is combination-enumeration vocabulary, which is backtracking's home turf. Enumerating all triples is precisely the brute force being escaped."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "Choosing a subset of values that hits an exact total is the subset-sum fingerprint, and subset-sum is a DP staple. The fixed size of three is what makes the heavier machinery unnecessary."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "fewer than three elements",
+    "exactly three zeros",
+    "all values strictly positive, so no triple exists",
+    "one value repeated 3,000 times",
+    "many duplicates producing one distinct triple from many index triples",
+    "extreme values where three additions could overflow a 32-bit accumulator"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given up to 3,000 integers that may repeat and may be negative, list every distinct set of three values summing to zero. Distinctness is by value content, not by position, so the same three numbers found at different indices count once. Cubic time is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A chemistry log records the charge of each of up to 3,000 ions, positive or negative, with many repeats. A stable cluster is any three ions whose charges cancel to zero. Two clusters using the same three charge values are considered the same cluster regardless of which physical ions were used. Enumerate the distinct stable clusters. Checking all triples is too slow. What mechanism applies and what waste does it kill?"
+    }
+  ]
+}

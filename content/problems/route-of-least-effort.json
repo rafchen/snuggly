@@ -1,0 +1,75 @@
+{
+  "problemId": "route-of-least-effort",
+  "sourceRef": "https://leetcode.com/problems/path-with-minimum-effort/",
+  "title": "Route Of Least Effort Across A Terrain",
+  "statement": "A grid of up to 100 by 100 cells holds an elevation for each cell. A route starts at the top-left cell and ends at the bottom-right, stepping between cells that share a side. The effort of a route is the largest single elevation change between consecutive cells along it; the number of steps does not matter at all. Report the smallest effort achievable by any route. Elevations are non-negative and a route of a single cell has effort zero.",
+  "primaryPattern": "dijkstra",
+  "secondary": [
+    "heap",
+    "binary_search_answer"
+  ],
+  "redundancy": "reexpanding_equal_cost_frontier",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "heapq",
+    "heap_topk",
+    "tree_basics",
+    "dfs_traversal",
+    "union_find",
+    "topological_sort",
+    "dijkstra"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a grid of up to 100 by 100 elevations, so at most 10,000 cells with four-way movement. Output: one number. The cost of a route is the maximum step along it, not the total, which changes what 'shortest' means but not the structure.",
+    "brute": "Enumerate routes recursively, tracking the largest step so far, and keep the smallest such value over all complete routes. Exponential, since a cell is reached by exponentially many routes.",
+    "bottleneck": "The same cell is expanded once per route prefix that reaches it, and each expansion re-explores the identical region beyond it — including expansions from prefixes whose largest step is already worse than one already recorded for that cell.",
+    "lift": "Define a cell's cost as the smallest possible largest-step over routes reaching it. That cost obeys the same finalization argument as ordinary distance: the smallest unfinalized cost is final. Repeatedly take the unfinalized cell with the smallest cost from a priority queue and relax its neighbours using the maximum of the current cost and the step's size.",
+    "invariant": "Every finalized cell's recorded value is the true minimum-over-routes of the maximum step; a cell is finalized only when its value is smallest among unfinalized cells, and since combining with a further step can only keep or increase the value, no later route improves it.",
+    "verify": "A one-by-one grid, giving zero; a grid of identical elevations, giving zero; a single row; a grid where the direct route is worse than a detour, which is the case a straight-line heuristic fails; 100 by 100 cells. Cost is O(cells log cells)."
+  },
+  "hints": [
+    "Read the cost definition twice. It is not the total of the steps and it is not the number of steps. Say exactly what it is, and what that means for a route that takes a long detour to avoid one cliff.",
+    "You have a recursive route explorer carrying the worst step so far. Take a cell in the middle of the grid and say how many times your explorer arrives at it.",
+    "It arrives once per route prefix, and each arrival re-explores the identical region beyond that cell — including arrivals whose worst step is already larger than one recorded earlier for the same cell.",
+    "Name the waste: re-expanding cells already reached, and re-exploring everything past them, even from prefixes that are already provably no better.",
+    "Treat each cell's value as the smallest achievable worst step on a route to it. That value never decreases when the route is extended, so the smallest unfinalized value is already final — which is exactly the setting for Dijkstra's algorithm with a modified combining rule.",
+    "Keep a value per cell, all infinite except the start at zero, and a min-priority queue keyed on value. Pop the smallest, skip it if stale, and for each side neighbour compute the larger of the current cell's value and the absolute elevation difference; if that beats the neighbour's recorded value, update and push. Stop when the destination is popped. Which property of the combining rule replaces the usual positivity requirement here?",
+    "Frame: a grid of up to 100 by 100 elevations with four-way movement; a route's cost is the largest single step along it, so detours are free and only cliffs matter. Brute: enumerate routes carrying the worst step so far; exponential. Bottleneck: each cell is expanded once per arriving prefix and each expansion re-explores the identical region beyond, including from prefixes already worse than one recorded. Lift: Dijkstra's algorithm with maximum in place of addition. Define a cell's value as the minimum over routes of the maximum step. Invariant: when the smallest unfinalized value is popped it is already optimal, because any alternative route must leave the finalized set through an unfinalized cell whose value is at least as large, and extending it takes the maximum with further steps, which can only keep or increase the value. That monotonicity — combining never decreases the value — is precisely what positivity provides in the ordinary version, and it is what makes the finalization argument valid here. Implementation: values infinite except the start at zero, a min-priority queue, pop-skip-if-stale, relax each side neighbour with the larger of the current value and the absolute elevation difference. Verify: a one-by-one grid gives zero, a uniform grid gives zero, a single row reduces to the largest adjacent difference, and a grid where a long detour beats the direct route confirms that step count is irrelevant. Time O(cells log cells), space O(cells). Two alternatives reach the same answer: binary search the effort and test reachability with a plain traversal, or merge cells in increasing edge-weight order until the endpoints join."
+  ],
+  "distractors": [
+    {
+      "mechanism": "binary_search_answer",
+      "temptingBecause": "'Minimize the maximum' is the strongest binary-search-on-answer signal there is, and guessing an effort then testing reachability really does solve this. It costs an extra log factor over the direct computation, and it is worth knowing precisely because it looks more obviously right than it is."
+    },
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "A grid with four-way movement asking for a best route is layer-expansion imagery. Layers count steps, and the number of steps is explicitly stated to be irrelevant here."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "Grid problems with a minimized quantity are usually solved by sweeping a table, and the state 'least effort to reach this cell' is natural. Movement is not restricted to one direction, so there is no sweep order along which the table can be filled."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "'Minimize the maximum' on a grid reads as binary search on the answer, and the grid shape reads as grid DP; both are plausible enough that the shortest-path structure is easy to miss.",
+  "edgeCases": [
+    "a one-by-one grid",
+    "a grid of identical elevations",
+    "a single row",
+    "a single column",
+    "a grid where a long detour beats the direct route",
+    "a 100 by 100 grid with a single cliff",
+    "elevations at the extremes of the allowed range"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "A grid of up to 100 by 100 cells holds elevations. Moving between side-adjacent cells from the top-left to the bottom-right, a route's cost is the largest elevation change between any two consecutive cells on it; the number of steps is irrelevant. Report the smallest achievable cost. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A hiking club plots a trail across a 100 by 100 elevation survey, moving only between squares that share an edge. What tires the group is the single steepest transition on the trail, not its length, so a long meandering route with gentle transitions beats a short one over a cliff. Find the smallest possible value for the steepest transition on a route from one corner to the opposite one. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

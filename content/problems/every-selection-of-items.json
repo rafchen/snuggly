@@ -1,0 +1,67 @@
+{
+  "problemId": "every-selection-of-items",
+  "sourceRef": "https://leetcode.com/problems/subsets/",
+  "title": "Every Selection Of Items",
+  "statement": "A collection of up to 15 distinct integers is given. Produce every possible selection of them, including the empty selection and the full collection, with each selection listed once. Selections are unordered, so choosing the first and third items is the same selection as choosing the third and first. The output may list the selections in any order. There are exactly two to the power of the collection size of them, which is at most 32,768.",
+  "primaryPattern": "backtracking",
+  "secondary": [],
+  "redundancy": "reexploring_dead_branches",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 15 distinct integers. Output: all two-to-the-n selections. n at 15 is the classic subset-enumeration size, so exponential output is expected and the only question is whether the work per selection is small.",
+    "brute": "Generate every ordered arrangement of every length and then discard the ones that repeat a selection in a different order, comparing each candidate against everything produced so far. Factorial work plus a deduplication pass, to produce an exponential answer.",
+    "bottleneck": "It produces the same selection many times in different orders and then re-checks each freshly produced candidate against the entire set of results already collected, so the same selection is both re-derived and re-compared once per ordering of its members.",
+    "lift": "Impose an order on the decisions: walk the items once, and at each item make exactly two branches — include it or do not. Every selection is then produced along exactly one path, so no duplicates arise and no deduplication is needed.",
+    "invariant": "At depth i, the partial selection contains a decided answer for items zero through i-1 and nothing about items i onward; therefore every leaf of the decision tree corresponds to exactly one distinct selection.",
+    "verify": "An empty collection, giving one selection, the empty one; one item, giving two; 15 items, giving 32,768; the output sizes summing to n times two-to-the-n-minus-one. Each node of the tree costs constant work plus the cost of copying a completed selection, so the total is O(n times two-to-the-n)."
+  },
+  "hints": [
+    "The collection holds at most 15 items. Look up what that magnitude signals about intended complexity, and note how many selections exist at that size.",
+    "You have an approach that produces selections and removes duplicates. Say where the duplicates come from.",
+    "The same selection is produced once for every order in which its members could be chosen, and each freshly produced candidate is then compared against everything collected so far to see whether it is new.",
+    "Name the waste: exploring branches that lead to selections already produced along another branch, and then re-comparing results to discover the collision after the fact.",
+    "Make the choices in a fixed order so that duplicates become impossible rather than detected. Walk the items once and branch twice per item — take it or skip it — which is a backtracking search over decisions rather than over arrangements.",
+    "Write a recursion carrying the index of the next undecided item and the current partial selection. At the end of the collection, record a copy of the partial selection. Otherwise, recurse having skipped the item, then add the item, recurse again, and remove it. Why must the recorded selection be a copy rather than the working list itself?",
+    "Frame: up to 15 distinct integers; output is all two-to-the-n selections, at most 32,768. n at 15 is the subset-enumeration fingerprint, so exponential output is expected and only the per-selection cost is in question. Brute: generate all ordered arrangements of all lengths and deduplicate by comparison; factorial work plus a quadratic deduplication. Bottleneck: each selection is re-derived once per ordering of its members, and each candidate is re-compared against all results collected so far. Lift: backtracking over decisions in a fixed item order. At item i there are exactly two branches, include or exclude, so every selection is reached along exactly one root-to-leaf path and duplicates cannot occur. Invariant: at depth i the partial selection has a decided answer for items zero through i-1 and nothing decided about items i onward, so the leaves correspond one-to-one with the selections. The recorded selection must be a copy, because the working list is mutated as the recursion unwinds — recording the live list stores a reference that later becomes something else, which is the single most common bug in this pattern. Verify: an empty collection gives one selection, one item gives two, 15 items give 32,768, and the total output size is n times two-to-the-n-minus-one. Time O(n times two-to-the-n), space O(n) for the recursion beyond the output. With distinct items and n at most 15, iterating the integers zero through two-to-the-n-minus-one and reading their bits gives the same result without recursion."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "n at most 15 with a combinatorial flavour is the bitmask-DP fingerprint, and the enumeration really is over bitmasks. There is no optimization or counting here — every selection must be emitted, so nothing can be memoized away."
+    },
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "The recursion is literally a depth-first walk of a decision tree, so the family is right. The discriminator is that state is added and then removed on the way out, because candidate solutions are being built rather than nodes visited."
+    },
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "Deduplicating produced selections with a set is the obvious fix to the naive approach and it does work. It treats the symptom: the duplicates should be made impossible by the ordering of decisions rather than detected after being generated."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "an empty collection",
+    "a single item",
+    "two items",
+    "15 items producing 32,768 selections",
+    "items including zero and negative values",
+    "verifying that the empty selection appears exactly once"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "Given up to 15 distinct integers, produce every possible selection of them, including the empty one and the whole collection, with each selection appearing exactly once and order within a selection irrelevant. Generating orderings and deduplicating is wasteful. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A test lab has up to 15 distinct optional features and must run one trial for every possible feature combination, including the trial with no features enabled and the one with all of them. Two configurations enabling the same features are the same trial regardless of the order they were switched on. List every trial exactly once. Enumerating switch-on orders and then discarding repeats is wasteful. What mechanism applies, and what work does it save?"
+    }
+  ]
+}

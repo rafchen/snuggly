@@ -1,0 +1,70 @@
+{
+  "problemId": "fewest-single-letter-edits-to-target",
+  "sourceRef": "https://leetcode.com/problems/word-ladder/",
+  "title": "Fewest Single-Letter Steps To The Target Word",
+  "statement": "A start word, a target word and a list of up to 5,000 allowed words are given, all lowercase and all of the same length, which is at most ten. A step replaces exactly one letter of the current word, and the result of every step must appear in the allowed list; the start word need not appear there but the target must. Report the number of words in the shortest chain from the start to the target, counting both ends, or zero if no chain exists. Every step counts the same regardless of which letter changes.",
+  "primaryPattern": "bfs",
+  "secondary": [
+    "hashing"
+  ],
+  "redundancy": "reexpanding_equal_cost_frontier",
+  "phase": 3,
+  "prerequisites": [
+    "hashing",
+    "tree_basics",
+    "bfs_levels",
+    "shortest_path_unweighted"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: two words plus a list of up to 5,000 allowed words, all of length at most 10. Output: the shortest chain length, or zero. Every step costs the same, and the implicit structure is a graph whose nodes are words and whose edges join words differing in one letter.",
+    "brute": "Explore chains recursively: from the current word, try every allowed word that differs in one letter and recurse, keeping the shortest complete chain. Exponential, because the same word is reached along exponentially many chains.",
+    "bottleneck": "The same word is expanded once for every chain prefix that reaches it, and each expansion re-scans the entire allowed list to find the words one letter away — so both the neighbour search and the exploration beyond a word are repeated for every distinct way of arriving at it.",
+    "lift": "Because every step costs the same, the first arrival at a word is along a shortest chain, so a visited set makes later arrivals discardable. Expand the frontier one step at a time with a queue. Separately, generate neighbours by substituting each position with each letter and testing membership in a hash set, rather than scanning the whole list.",
+    "invariant": "When a word is first enqueued, its recorded chain length is the true minimum; the queue is always processed in non-decreasing chain length, so an entire layer is handled before the next begins.",
+    "verify": "Target absent from the allowed list, giving zero; start equal to target; words of length one; no allowed word within one letter of the start; 5,000 words of length ten. Each word is enqueued once and each expansion costs length times alphabet size, so O(words times length times 26)."
+  },
+  "hints": [
+    "Before choosing an approach, describe the structure implied by the rules: what are the things you move between, when are two of them adjacent, and what does one move cost?",
+    "You have a recursive chain explorer. Pick a word that sits in the middle of many chains and say how many times your explorer reaches it.",
+    "It reaches that word once per chain prefix, and each arrival re-explores everything beyond it — which is identical every time, since what follows a word does not depend on how you got to it. It also rescans the whole allowed list to find neighbours on every single arrival.",
+    "Two wastes are stacked: re-exploring regions already explored from a word that has already been reached, and re-searching the entire word list for the neighbours of a word you have already found neighbours for.",
+    "All steps cost the same, so the first arrival at a word is already optimal — expand outward one layer at a time using a queue, which is breadth-first search, and mark words as reached when they enter the queue. For the second waste, generate candidate neighbours by substitution and test them against a set.",
+    "Put the allowed words in a set. Start a queue with the start word at length one and mark it used. Pop a word, and for each position and each of the 26 letters, form the substituted word; if it is in the set and unused, mark it and enqueue it with length one greater. Return as soon as the target is formed. Why is generating 26 candidates per position cheaper than scanning 5,000 words, and when would that stop being true?",
+    "Frame: two words and up to 5,000 allowed words of length at most 10; the implicit graph has words as nodes and one-letter differences as edges, with uniform step cost. Output is the shortest chain length or zero. Brute: recursive chain exploration; exponential, since a word is reached by exponentially many prefixes. Bottleneck: each arrival at a word re-explores the identical region beyond it, and each arrival re-scans all 5,000 words to find the ones a single letter away. Lift: breadth-first search over the implicit graph, with a hash set for both the allowed words and the visited set. Invariant: a word's chain length when first enqueued is the true minimum, and the queue is processed in non-decreasing length, so layers complete in order. Marking must happen at enqueue time, not dequeue time, or a word can be queued many times before it is first processed. Neighbour generation by substitution costs length times 26 per word, about 260, versus 5,000 times length for a scan — the substitution approach wins while the alphabet times length stays below the list size, and would lose for very long words over a large alphabet. Verify: a target absent from the list gives zero, start equal to target gives one, single-letter words, and a start with no neighbour at all. Each word is enqueued at most once, so O(words times length times 26) time and O(words times length) space. Expanding from both ends simultaneously roughly halves the explored frontier and is the standard refinement."
+  ],
+  "distractors": [
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "Building a chain step by step and undoing a step that leads nowhere is exactly the try-and-undo shape, and the problem talks about forming sequences. Undoing is unnecessary here because the shortest chain to a word never depends on the chain that reached it."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Fewest edits between two words' is edit-distance vocabulary and that really is a two-dimensional DP. The constraint that every intermediate word must be in the allowed list turns it into a reachability problem, which no edit-distance table captures."
+    },
+    {
+      "mechanism": "trie",
+      "temptingBecause": "A large set of equal-length words with a shared-structure flavour is prefix-tree territory, and the tree does speed up some neighbour lookups. Words one letter apart differ in the middle as often as at the start, so shared prefixes are the wrong index for the adjacency being searched."
+    }
+  ],
+  "disguiseLevel": 3,
+  "misleadingFingerprint": "Nothing in the wording mentions a graph, a path or a distance; it reads as a string-editing puzzle, and the graph has to be constructed by the solver before any mechanism becomes visible.",
+  "edgeCases": [
+    "target not present in the allowed list",
+    "start equal to target",
+    "words of length one",
+    "no allowed word within one letter of the start",
+    "allowed list containing the start word",
+    "5,000 words of length ten",
+    "two disconnected clusters of words"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Given a start word, a target word, and up to 5,000 allowed words all of the same length, find the fewest words in a chain from start to target where each consecutive pair differs in exactly one letter and every word after the start is in the allowed list. Report zero if impossible. All steps cost the same. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A lab holds 5,000 approved chemical formulations, each written as a fixed-length code. A technician can move from one formulation to another only by altering a single position of the code, and every intermediate formulation must be on the approved list. Given a starting formulation and a desired one, report the fewest formulations in a valid sequence including both ends, or state that no sequence exists. Every alteration takes the same effort. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

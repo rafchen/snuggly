@@ -1,0 +1,65 @@
+{
+  "problemId": "widest-water-between-posts",
+  "sourceRef": "https://leetcode.com/problems/container-with-most-water/",
+  "title": "Most Water Between Two Posts",
+  "statement": "A row of up to 100,000 vertical posts stands on flat ground, one unit apart, each with a non-negative height. Pick any two posts; the water they could hold between them is the distance between them multiplied by the height of the shorter one, since water spills over the shorter post. Everything between the two chosen posts is ignored entirely — no post in between blocks or holds anything. Report the largest amount of water obtainable by a single choice of two posts.",
+  "primaryPattern": "two_pointers_opposite",
+  "secondary": [],
+  "redundancy": "recomparing_sorted_pairs",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "two_pointers_opposite"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 non-negative heights. Output: one number, the maximum of width times minimum height over all pairs. 1e5 forbids evaluating all 5e9 pairs.",
+    "brute": "Two nested loops over every pair, computing width times the smaller height and tracking the maximum. O(n^2).",
+    "bottleneck": "It re-evaluates pairs that cannot possibly beat one already measured: once the widest pair involving a given short post has been measured, every narrower pair still limited by that same post is measured again anyway, each one strictly worse.",
+    "lift": "Place one index at each end and repeatedly discard the shorter side. Because width only shrinks from here, the shorter post can never be the limiting height of a better pair than the one just measured.",
+    "invariant": "The best pair over all indices still lies within the current window: every pair excluded so far had the discarded post as its limiting height and a width no greater than the width at the moment it was discarded.",
+    "verify": "Two posts; all posts the same height, where the answer is the outermost pair; strictly increasing heights; a single tall post surrounded by zeros; n at 100,000. Each step moves one index inward once, giving O(n) time and O(1) space."
+  },
+  "hints": [
+    "One hundred thousand posts means five billion pairs. Before choosing an approach, decide what running time you are allowed to spend and write that number down.",
+    "You have the all-pairs version working. Instead of asking how to speed it up, ask which of those pairs you could have skipped without ever looking at them.",
+    "Take the pair made of the very first and very last post. Compare that against any other pair that includes whichever of those two is shorter. What do you notice about both factors — width and limiting height — in that comparison?",
+    "The waste is re-measuring pairs that are provably no better than one already measured: same limiting post, strictly smaller width. Every one of those measurements is a foregone conclusion.",
+    "Two pointers, one at each end, moving inward. The decision of which one to move is the entire problem.",
+    "Start with an index at each end and record the area. Then advance the index sitting on the shorter post inward by one, and repeat until they meet. Before writing it: why is discarding the shorter post safe, and what exactly would go wrong if you advanced the taller one instead?",
+    "Frame: up to 1e5 non-negative heights, maximize width times the smaller of the two chosen heights, so 1e5 rules out the 5e9-pair scan. Brute: nested loops over all pairs, O(n^2). Bottleneck: pairs limited by the same short post are re-measured at ever-smaller widths, and every such measurement is guaranteed to lose to the widest one. Lift: two pointers starting at the extremes, always retreating the shorter side. Invariant: the optimal pair is always contained between the two current indices, because a discarded post was the limiting height of every pair it still belonged to and those pairs all had width no greater than the one just measured. So discarding it loses nothing. Advancing the taller side instead would discard pairs whose limiting height might rise, and the argument collapses. Verify: two posts; all equal heights, where the answer is the outermost pair; strictly increasing heights; one tall post among zeros. Each iteration moves exactly one index inward, so O(n) time and O(1) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "monotonic_stack",
+      "temptingBecause": "A row of bars with heights is the visual signature of the next-smaller-element family, and the neighbouring problem about trapped rainwater on the same picture really does use one — but here the posts in between are explicitly irrelevant."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Maximize over all choices' reads as an optimization recurrence, and a state such as 'best area using posts up to i' can be written down. It just carries no useful structure, because the best pair's left post is not determined by any prefix."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "Two indices sweeping inward looks exactly like a window shrinking, and the code is nearly identical in shape. The discriminator is that nothing here depends on the elements between the indices."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": "The bar-chart framing sits one word away from the histogram and rainwater problems, both of which genuinely need the bars in between. Here they are explicitly inert.",
+  "edgeCases": [
+    "exactly two posts",
+    "all posts the same height",
+    "strictly increasing heights",
+    "a single tall post surrounded by zero-height posts",
+    "all heights zero",
+    "n at 100,000 with the best pair adjacent in the middle"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "You are given up to 100,000 heights standing one unit apart. Choosing two of them, the value obtained is the distance between them multiplied by the smaller of the two heights; whatever stands between them is ignored. Maximize that value over all choices of two. Quadratic time is too slow. State the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A city plans a rectangular banner strung between two of 100,000 lamp posts along a straight avenue. The banner must hang below the tops of both posts it attaches to, and its area is its horizontal span times its height, which is capped by the shorter post. Posts between the two attachment points do not interfere. Which two posts maximize banner area? Name the mechanism and the wasted work it avoids."
+    }
+  ]
+}

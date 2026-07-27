@@ -1,0 +1,68 @@
+{
+  "problemId": "fewest-hops-to-the-far-end",
+  "sourceRef": "https://leetcode.com/problems/jump-game-ii/",
+  "title": "Fewest Hops To The Far End",
+  "statement": "An array of up to 10,000 non-negative integers is given; the value at each position is the greatest distance you may move forward from that position in a single hop, and you may hop any shorter distance instead. You begin at the first position and must reach the last. Report the fewest hops needed. It is guaranteed that the last position is reachable. A single-position array needs zero hops.",
+  "primaryPattern": "greedy",
+  "secondary": [],
+  "redundancy": "reevaluating_safe_local_choice",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "sorting_with_keys",
+    "sorting_preprocess",
+    "greedy_exchange"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 10,000 non-negative reach values. Output: the minimum number of hops from the first to the last position, guaranteed reachable. Reaching further is never worse, which is the structural fact the whole solution rests on.",
+    "brute": "Explore every sequence of hops recursively and keep the shortest that reaches the end. Exponential, since each position offers many hop lengths and the same position is reached along many sequences.",
+    "bottleneck": "The same position is reached by many different hop sequences and re-explored each time, and among sequences using the same number of hops the algorithm re-evaluates every landing position separately even though only the furthest one can ever matter.",
+    "lift": "Group positions by how many hops are needed to reach them. All positions reachable in h hops form a contiguous stretch, and the stretch for h+1 extends exactly as far as the furthest reach from anywhere in the stretch for h. Sweep once, tracking the current stretch's end and the furthest reach seen.",
+    "invariant": "At any point in the sweep, every position at or before the current stretch's end is reachable within the current hop count, and the running furthest reach is the exact end of the next stretch.",
+    "verify": "A single position, giving zero; two positions with a reach of at least one; a zero reach in the middle that must be hopped over; all reaches equal to one, giving n-1 hops; a first position reaching the end directly, giving one; 10,000 positions. One pass, O(n) time and O(1) space."
+  },
+  "hints": [
+    "State one structural fact about the reach values before choosing an approach: if you can land at a position, what do you know about the positions before it, and is landing further ever worse?",
+    "You have a recursive explorer over hop sequences. Take two sequences that both use three hops and describe what your explorer does with each of their landing positions.",
+    "It explores from each landing position separately, even though among all positions reachable in three hops, only the one that reaches furthest can ever extend the frontier.",
+    "Name the waste: re-exploring landing positions whose usefulness is already dominated by another position reachable in the same number of hops.",
+    "The positions reachable within h hops always form a contiguous stretch from the start. If you can prove that, the local choice of always extending to the furthest reach is provably safe, and one greedy sweep settles the problem.",
+    "Sweep left to right holding the end of the current stretch and the furthest position reachable from anything seen so far. Update the furthest reach at every position; when the sweep passes the current stretch's end, increment the hop count and set the stretch's end to the furthest reach. Stop once the stretch's end covers the last position. Why is it never necessary to record which position you actually hopped from?",
+    "Frame: up to 1e4 non-negative reach values, output is the fewest hops from the first to the last position, guaranteed reachable. The key structural fact is that landing further is never worse: from a further position you can reach at least as far as any nearer one whose reach is smaller, and every position before a reachable one is also reachable. Brute: explore all hop sequences; exponential, with the same position re-explored once per sequence reaching it. Bottleneck: among all sequences of the same length, every landing position is explored separately, though only the one reaching furthest can extend the frontier. Lift: think in stretches. The set of positions reachable in exactly h hops is a contiguous stretch, and the stretch for h+1 ends at the furthest reach achievable from anywhere in the h stretch. Invariant: during the sweep, every position at or before the current stretch's end is reachable within the current hop count, and the running furthest reach is exactly where the next stretch ends. So the sweep never needs to know which position it hopped from — only the boundary matters. Verify: a single position gives zero, two positions give one, a zero reach in the middle must be hopped over from before it, all reaches of one give n-1 hops, and a first position reaching the end gives one. One pass, O(n) time, O(1) space. The layered-frontier reading of this is exactly a breadth-first search over positions, collapsed because the frontier is always an interval."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Fewest steps to reach the end' with a state per position is a textbook one-dimensional recurrence and it is correct at O(n squared). It is the answer most people write, and the interesting question is what property makes the quadratic search collapse."
+    },
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "Hop counts are exactly distances in an unweighted graph over positions, so layer expansion gives the right answer. It is genuinely the same algorithm in disguise — the greedy sweep is that expansion with each layer represented as an interval instead of a queue."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "The current stretch has two moving boundaries sweeping rightward, which looks exactly like a window. The boundaries advance by a reachability argument rather than by an admissibility predicate, so nothing is being shrunk to maintain a property."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "'Fewest steps' plus a per-position state reads as a one-dimensional DP, and n at 10,000 makes the quadratic DP look affordable enough that the linear structure never gets examined.",
+  "edgeCases": [
+    "a single position",
+    "two positions",
+    "a zero reach in the middle that must be hopped over",
+    "all reaches equal to one",
+    "a first position reaching the last directly",
+    "10,000 positions with reaches of one",
+    "a large reach value overshooting the end"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "An array of up to 10,000 non-negative integers gives, at each position, the greatest distance you may move forward from it in one move; shorter moves are allowed. Starting at the first position, report the fewest moves to reach the last, which is guaranteed reachable. Exploring move sequences is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A river has 10,000 stepping stones in a line. Each stone is marked with the greatest number of stones ahead a walker may skip in one stride from it, and shorter strides are permitted. A walker starts on the first stone and must reach the last, which is guaranteed reachable. Report the fewest strides required. Trying stride sequences is far too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "problemId": "largest-rectangle-in-a-skyline",
+  "sourceRef": "https://leetcode.com/problems/largest-rectangle-in-histogram/",
+  "title": "Largest Rectangle Under A Skyline",
+  "statement": "Up to 100,000 bars of unit width and given non-negative heights stand side by side with no gaps. A rectangle drawn under this skyline must span a contiguous run of bars and may rise no higher than the shortest bar in that run; its area is that height multiplied by the number of bars spanned. Report the largest area of any such rectangle. Every bar is a candidate run of length one, so the answer is at least the tallest single bar.",
+  "primaryPattern": "monotonic_stack",
+  "secondary": [],
+  "redundancy": "refinding_next_greater",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "stack_basics",
+    "monotonic_stack"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 non-negative bar heights. Output: one number, the maximum area. n at 1e5 rules out examining all runs, of which there are about 5e9.",
+    "brute": "For every pair of endpoints, find the shortest bar in that run and multiply by the width. O(n^2) with a running minimum, O(n^3) without.",
+    "bottleneck": "It re-scans overlapping runs for their minimum: the run from 10 to 40 and the run from 10 to 41 differ by one bar, yet the minimum over the shared 31 bars is re-derived for both, and for every other run containing them.",
+    "lift": "Turn it around and ask, for each bar, how far its rectangle can extend if that bar is the limiting height. The boundaries are the nearest strictly shorter bar on each side, which a monotonic stack finds for every bar in one pass.",
+    "invariant": "The stack holds indices of bars with strictly increasing heights; when a bar is popped, the bar arriving now is its first strictly shorter bar on the right, and the entry beneath it on the stack is its first strictly shorter bar on the left.",
+    "verify": "Empty input; one bar; all bars equal, giving height times n; strictly increasing and strictly decreasing heights; a zero-height bar splitting two tall regions; 100,000 bars. Each index is pushed once and popped once, so O(n) time and O(n) space. A sentinel bar of height zero appended at the end flushes everything still pending."
+  },
+  "hints": [
+    "The skyline reaches 100,000 bars. Count how many contiguous runs exist and compare that with the time you can afford — the gap tells you that runs cannot be enumerated at all.",
+    "You have the all-runs approach working. Describe what quantity it computes for each run, and whether that quantity is expensive to obtain.",
+    "For each run it needs the shortest bar inside. Two runs sharing thirty bars each re-derive the minimum over those same thirty bars separately.",
+    "Say the waste concretely: you are repeatedly re-finding the smallest value over ranges that heavily overlap, once per candidate range.",
+    "Change the question from 'for each run, what is its limiting bar' to 'for each bar, which run does it limit'. That run stops at the first strictly shorter bar on each side, and a monotonic stack finds those boundaries for every bar in a single pass.",
+    "Sweep left to right with a stack of indices whose heights strictly increase. When the arriving bar is shorter than the top, pop it: the arriving index is its right boundary, and whatever sits below it on the stack is its left boundary, so its area is its height times the distance between those boundaries minus one. Push the arriving index. Append a zero-height sentinel to flush the rest. What is the left boundary when the stack becomes empty during a pop?",
+    "Frame: up to 1e5 non-negative heights, output is the maximum area of a rectangle spanning a contiguous run and capped by that run's shortest bar; there are about 5e9 runs, so they cannot be enumerated. Brute: for each pair of endpoints track a running minimum and multiply by width, O(n^2). Bottleneck: heavily overlapping runs each re-derive the minimum over the bars they share, so a middle bar participates in the minimum computation of a quadratic number of runs. Lift: invert the question — for each bar, the widest rectangle in which it is the limiting height extends until the first strictly shorter bar on each side. A monotonic stack of strictly increasing heights supplies both boundaries in one pass. Invariant: the stack holds indices of strictly increasing heights; when an index is popped, the arriving bar is its first strictly shorter right neighbour and the element beneath it is its first strictly shorter left neighbour. Area is height times right boundary minus left boundary minus one. When the stack empties during a pop, the left boundary is minus one, meaning the rectangle reaches the start of the skyline. Verify: empty input, one bar, all bars equal giving height times n, strictly increasing and decreasing heights, and a zero bar splitting two tall regions. Appending a zero-height sentinel forces every remaining entry to be popped and measured. Each index is pushed and popped once: O(n) time, O(n) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "The picture is identical to the container-of-water problem, which really is solved by converging indices, and both ask for a maximum area. Here the bars in between genuinely cap the rectangle, which is precisely what the converging argument cannot account for."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Maximum over all contiguous runs' is prefix-optimization vocabulary, and a state like 'best rectangle ending at bar i' is easy to write down. The best rectangle ending at i is not a function of the best one ending at i-1, so the recurrence does not close."
+    },
+    {
+      "mechanism": "segment_tree",
+      "temptingBecause": "A range-minimum structure plus divide and conquer solves this in n log n and is a completely reasonable line of attack. It is a log factor slower and it does not expose the per-bar boundary insight the problem exists to teach."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "empty input",
+    "single bar",
+    "all bars the same height",
+    "strictly increasing heights",
+    "strictly decreasing heights",
+    "a zero-height bar splitting two tall regions",
+    "100,000 bars of equal height"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 100,000 unit-width bars of given heights stand side by side. A rectangle must span a contiguous run of bars and its height is capped by the shortest bar in that run. Report the largest achievable area. Examining every run is impossible at this size. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A city block has 100,000 adjacent parcels of equal width, each with a legal height limit. A developer wants one rectangular tower that spans a contiguous group of parcels; the tower's height cannot exceed the strictest limit among the parcels it covers, and its value is height times the number of parcels covered. Find the most valuable tower. Checking every group of parcels is impossible. What mechanism, and what wasted work does it remove?"
+    }
+  ]
+}

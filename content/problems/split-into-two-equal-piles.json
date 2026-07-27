@@ -1,0 +1,71 @@
+{
+  "problemId": "split-into-two-equal-piles",
+  "sourceRef": "https://leetcode.com/problems/partition-equal-subset-sum/",
+  "title": "Split Into Two Equal Piles",
+  "statement": "A collection of up to 200 positive integers is given, each at most 100. Decide whether the collection can be divided into two groups whose totals are equal; every number must go into exactly one group and a group may not be empty. Report only whether it is possible. Numbers may repeat. The total across the whole collection is therefore at most 20,000.",
+  "primaryPattern": "dynamic_programming",
+  "secondary": [],
+  "redundancy": "recomputing_subproblems",
+  "phase": 4,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking",
+    "memoization",
+    "dp_knapsack",
+    "dp_subset_sum"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 200 positive integers, each at most 100, so the total is at most 20,000. Output: a boolean. The first move is to convert the two-group question into a single-target question: a valid split exists exactly when some group totals half the overall sum, which requires that sum to be even.",
+    "brute": "Recurse over the numbers, at each one either adding it to the first group or the second, and test the totals at the end. Two branches per number, so two-to-the-200 calls.",
+    "bottleneck": "The remaining work depends only on which number comes next and how much of the target is still unmet, yet the recursion re-solves that same pair once for every distinct earlier assignment producing it — and enormously many assignments produce the same running total.",
+    "lift": "Cache on the pair of position and remaining target. There are only 200 times 10,001 such pairs, so memoizing collapses the exponential tree to two million constant-time computations, and the position dimension collapses further to a single reusable row of reachable totals.",
+    "invariant": "The stored value at a pair says whether the target can be met exactly using only the numbers from that position onward; in the rolling-row form, a slot is set exactly when that total is reachable using some subset of the numbers processed so far.",
+    "verify": "An odd overall total, which is immediately impossible; a single number, which cannot be split; two equal numbers; all numbers equal to one with an even count; a collection summing to zero, which cannot occur since numbers are positive; 200 numbers of 100 each. Time proportional to the count times the half-total, space proportional to the half-total."
+  },
+  "hints": [
+    "Two magnitudes are given and they multiply into something small: at most 200 numbers, each at most 100. Compute the largest possible overall total, then rewrite the two-group question as a question about a single target.",
+    "With the target in hand you have a recursion that assigns each number to one side or the other. Say what the recursion needs to know to finish, beyond which number is next.",
+    "It needs only how much of the target remains. Enormously many different earlier assignments leave the same remaining target at the same position, and each of them redoes the identical remaining work.",
+    "Name the waste: recomputing whether a remaining target is reachable from a given position, when that question has already been answered and does not depend on which earlier numbers were chosen.",
+    "Store the answer for each position-and-remaining-target pair the first time it is computed. Memoizing the brute force bounds the work at the number of such pairs, which the constraints have already told you is small.",
+    "Convert to reachable totals: keep a set of totals achievable so far, seeded with zero, and for each number add it to every already-achievable total. Answer yes if half the overall total ever becomes achievable. If you implement this as a boolean row updated in place, which direction must you sweep the row, and why?",
+    "Frame: up to 200 positive integers each at most 100, so the overall total is at most 20,000; output is a boolean. Rung one is the reformulation: two equal groups exist exactly when some subset totals half the overall sum, which requires that sum to be even — an odd total is an immediate no. Brute: assign each number to one side or the other and check at the end; two-to-the-200 calls. Bottleneck: the remaining work is determined by the position and the remaining target alone, yet the recursion re-solves that pair once per earlier assignment producing it, and vastly many assignments produce the same running total. Lift: memoize on that pair, bounding the work at 200 times 10,001 constant-time computations. Invariant: the entry for a pair says whether the remaining target is exactly reachable using the numbers from that position onward. Collapsing the position dimension gives a single boolean row over totals, where a slot is set exactly when that total is reachable using some subset of the numbers processed so far. Updating that row in place must sweep from the largest total downward, otherwise a number would be used more than once — the ascending sweep silently solves a different problem in which each number is unlimited. Verify: an odd overall total is impossible, a single number cannot be split, two equal numbers can, all-ones with an even count can, and 200 copies of 100 give a total of 20,000 with a target of 10,000. Time O(count times half-total), which is two million here; space O(half-total)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "Sorting descending and dropping each number onto the lighter pile is the natural balancing heuristic and gets close on most inputs. It has no exchange argument and fails on inputs like 3, 3, 2, 2, 2 where the exact split needs a non-obvious grouping."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "Assigning numbers to two piles with undo is exactly the brute force and it is where the derivation begins. It stops being the answer once you notice that only the running total matters, not which numbers produced it."
+    },
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Sorting and then pairing large with small to balance the piles is a familiar move for balancing problems. Converging pointers cannot search the space of subsets, which is where the exact equality has to come from."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "It reads as a balancing or partitioning task, which invites sorting and greedy pile-filling; the small bound on each value, which is what makes the total small enough to enumerate over, is easy to skim past.",
+  "edgeCases": [
+    "an odd overall total",
+    "a single number",
+    "two equal numbers",
+    "two unequal numbers",
+    "all numbers equal to one with an even count",
+    "200 numbers of 100 each",
+    "many repeats of the same value"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Given up to 200 positive integers, each at most 100, decide whether they can be split into two non-empty groups with equal totals, every number used exactly once. Only a yes or no is needed. Trying every assignment is exponential. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A moving company must load 200 crates onto two identical trucks, each crate weighing at most 100 kilograms. Legal limits require the two trucks to carry exactly the same total weight, and every crate must be loaded. The dispatcher needs only to know whether such a loading exists, not what it is. Trying every assignment of crates to trucks is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "problemId": "duplicate-a-linked-network",
+  "sourceRef": "https://leetcode.com/problems/clone-graph/",
+  "title": "Duplicate A Linked Network",
+  "statement": "You are given one node of a connected network of up to 100 nodes. Each node carries a distinct label and a list of the nodes it is directly linked to; links are mutual, so if A lists B then B lists A. Build and return a complete independent copy: every node duplicated, every link duplicated between the corresponding copies, and no copy linking to any original. The copy must have the same shape, including any loops, and the network may contain nodes linked to themselves.",
+  "primaryPattern": "dfs",
+  "secondary": [
+    "hashing"
+  ],
+  "redundancy": "retraversing_visited_regions",
+  "phase": 3,
+  "prerequisites": [
+    "hashing",
+    "tree_basics",
+    "dfs_traversal"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: one node of a connected mutual-link network of up to 100 nodes. Output: an independent copy with identical structure. Loops are possible, which is what makes a naive recursion fail rather than merely be slow.",
+    "brute": "Recursively copy: to copy a node, make a new node and recursively copy each neighbour. With any loop present this never terminates, and even on a loop-free network it copies a shared node once per path leading to it, producing duplicates.",
+    "bottleneck": "The recursion re-enters nodes it has already copied, once for every link leading into them, so a node reachable by several routes is copied several times and the whole region beyond it is re-traversed and re-copied on each arrival — and on a loop, forever.",
+    "lift": "Keep a map from each original node to its copy. Before copying a node, look it up: if a copy exists, return it. That turns re-arrival into a constant-time lookup and makes each node's region traversed once.",
+    "invariant": "At every moment the map holds a copy for exactly the originals already visited, and every copy in the map has links to copies of exactly those neighbours already processed; when the traversal finishes, every visited node's copy is complete.",
+    "verify": "A single node with no links; a single node linked to itself; two nodes linked to each other; a triangle; a long chain; 100 nodes fully linked to one another. Each node and each link is handled once, so O(nodes plus links) time and space."
+  },
+  "hints": [
+    "Two facts in the statement decide the shape of the answer: links are mutual, and loops are possible. Say what the second one does to a naive recursive copy.",
+    "You have a recursive copy that works on a tree. Trace it on a triangle of three mutually linked nodes and say what happens.",
+    "It copies a node, then copies its neighbour, which copies the first node again, and so on — it re-enters nodes it has already copied, once per link into them, and never stops.",
+    "Name the waste: re-entering and re-copying regions of the network that have already been copied, because nothing records which originals already have a copy.",
+    "Keep a map from original node to its copy, consulted before any copying happens. Then a depth-first search over the network copies each node exactly once and wires the links from the map.",
+    "Write a recursive routine that, given an original node, returns its copy: if the map already holds one, return it immediately; otherwise create the copy, put it in the map before recursing, then recurse on each neighbour and attach the returned copies. Why must the copy be placed in the map before the recursion rather than after it?",
+    "Frame: one node of a connected mutual-link network of up to 100 nodes, output is an independent structural copy; loops are possible and self-links are allowed. Brute: recursive copy of each neighbour; this fails to terminate on any loop and duplicates shared nodes on loop-free networks. Bottleneck: the recursion re-enters nodes already copied, once per incoming link, re-traversing and re-copying the entire region beyond them each time. Lift: a map from original to copy consulted before copying, which is the visited set in a form that also carries the answer. Invariant: the map holds a copy for exactly the originals already visited, and when the traversal completes, every visited copy has links to the copies of all its neighbours. Placing the copy into the map before recursing is the load-bearing detail — that is what makes a loop terminate, because the recursion that comes back around finds the in-progress copy and returns it instead of starting over. Placing it after recursing recreates the infinite descent exactly. Verify: a lone node, a node linked to itself, two mutually linked nodes, a triangle, a long chain, and 100 fully linked nodes. Each node and link is handled once: O(nodes plus links) time and space. A queue-based traversal works identically as long as the map is populated at enqueue time."
+  ],
+  "distractors": [
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "A queue-based sweep copies the network just as correctly and some people find it easier to reason about with loops present. No distance is involved, so the choice between the two orders is stylistic rather than structural."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "A recursion that descends into neighbours and returns looks like the try-and-undo shape, and copying feels like building something up. Nothing is ever undone: a copy once made is final, which is precisely why the map works."
+    },
+    {
+      "mechanism": "union_find",
+      "temptingBecause": "The network is described by connectivity and the word 'connected' appears in the statement, which is grouping vocabulary. The task is to reproduce the exact link structure, and a grouping structure deliberately forgets that structure."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a single node with no links",
+    "a single node linked to itself",
+    "two nodes linked to each other",
+    "a triangle of three nodes",
+    "a long chain of nodes",
+    "100 nodes each linked to every other",
+    "a node whose neighbour list contains a duplicate"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given one node of a connected network of up to 100 nodes with mutual links and possible loops, produce a fully independent copy with the same structure, where no copied node references any original. A naive recursive copy never terminates when a loop is present. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A city's tram map is stored as up to 100 stop records, each listing the stops directly reachable from it; connections are mutual and lines loop back on themselves. A simulator needs a private working copy of the whole map so it can modify it without disturbing the live version, starting from a single stop record it is handed. Copying by following connections outward naively runs forever on any loop. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

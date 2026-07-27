@@ -1,0 +1,69 @@
+{
+  "problemId": "water-held-between-bars",
+  "sourceRef": "https://leetcode.com/problems/trapping-rain-water/",
+  "title": "Water Held Between Bars",
+  "statement": "A skyline is described by up to 100,000 non-negative bar heights, each bar one unit wide, standing side by side with no gaps. Rain falls until nothing more can be held. Above each individual column, water settles to the level of the lower of two quantities: the tallest bar anywhere to its left including itself, and the tallest bar anywhere to its right including itself. Water above a column is whatever remains after subtracting that column's own bar height, and a negative remainder means no water. Report the total volume held across all columns.",
+  "primaryPattern": "prefix_sums",
+  "secondary": [
+    "two_pointers_opposite",
+    "monotonic_stack"
+  ],
+  "redundancy": "resumming_static_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "prefix_sums"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 non-negative heights. Output: total trapped volume as one number. The per-column rule is given outright, so rung one is easy and the whole difficulty is the repetition in rung three. n at 1e5 forbids a scan per column.",
+    "brute": "For each column, scan left to find the tallest bar on that side, scan right to find the tallest on the other, take the smaller, subtract this column's height, and add the non-negative remainder. O(n^2).",
+    "bottleneck": "The left-side maximum for column i and the left-side maximum for column i+1 are computed by two separate scans over ranges that differ by exactly one bar, so the same prefix of the skyline is rescanned for its maximum once for every column in the array.",
+    "lift": "The left-side maximum is a running aggregate over a static array, so compute all n of them in one sweep and all the right-side maxima in one reverse sweep. Two precomputed prefix arrays replace 2n scans.",
+    "invariant": "L at i always equals the maximum height over positions 0 through i, and R at i the maximum over i through n-1; each is maintained by a single comparison per step.",
+    "verify": "Empty input and single bar give zero; all bars equal give zero; strictly increasing and strictly decreasing both give zero; a deep valley between two towers; 100,000 bars. Three linear passes, O(n) time and O(n) space; the space collapses to O(1) with two converging indices."
+  },
+  "hints": [
+    "The per-column rule is handed to you, so rung one is nearly free. The number that matters is 100,000 — write down what that permits per column.",
+    "You have the direct approach that answers the rule literally for each column. Describe what work happens at column i, and then at column i+1.",
+    "Finding the tallest bar to the left of column i scans positions 0 through i. Finding it for column i+1 scans positions 0 through i+1 — the same ground plus one bar, computed entirely from scratch.",
+    "Name the waste: you are recomputing a running maximum over ranges that nest inside one another, once per column, over a skyline that never changes.",
+    "A running maximum over a static array is a prefix array. Build one sweeping left to right and another sweeping right to left, then answer every column in constant time.",
+    "Sweep once forward filling L, where L at i is the larger of L at i-1 and the height at i. Sweep once backward filling R the same way. Then total, over all i, the non-negative value of the smaller of L at i and R at i minus the height at i. Then ask the space question: if you only ever need the smaller of the two, do you actually need both arrays stored?",
+    "Frame: up to 1e5 non-negative heights with the per-column water rule stated outright; output is the summed volume; 1e5 forbids a scan per column. Brute: for each column scan both directions for the side maxima, take the smaller, subtract the bar, accumulate the non-negative remainder; O(n^2). Bottleneck: the left-side maximum for consecutive columns is recomputed by separate scans over nested ranges differing by one bar, so the same prefix is rescanned once per column, and symmetrically on the right. Lift: those side maxima are running aggregates over static data, so build a forward prefix-maximum array L and a backward one R, each in one sweep. Invariant: L at i is the maximum over 0..i and R at i the maximum over i..n-1, each maintained by one comparison per step. Verify: empty and single bar give 0, all-equal gives 0, monotone in either direction gives 0, and a valley between two towers gives the expected volume. Three passes, O(n) time and O(n) space. The space drops to O(1) by walking two indices inward from the ends and always advancing the side whose running maximum is smaller — safe because that side's water level is already fully determined by the maximum behind it, whatever stands on the far side."
+  ],
+  "distractors": [
+    {
+      "mechanism": "monotonic_stack",
+      "temptingBecause": "The bar-chart picture and the phrase 'the next taller bar on each side' put this squarely in the next-greater-element family, and a stack-based solution that accumulates water in horizontal layers really does work. It is correct and it is more machinery than the column-wise formulation needs."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "Water pools inside contiguous valleys, which look exactly like windows bounded by tall bars, and 'find the region between two boundaries' is window vocabulary. The bound on each column depends on the global maxima on each side, not on any local window."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "Precomputing the left-side and right-side maxima is technically a one-dimensional recurrence, so calling this DP is defensible enough to feel right. It obscures the actual insight, which is that a running aggregate over static data is a prefix computation."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": "The bar-chart silhouette is shared with the histogram and next-greater problems, so the picture alone points at a stack before any redundancy has been named.",
+  "edgeCases": [
+    "empty input",
+    "single bar",
+    "all bars equal height",
+    "strictly increasing heights",
+    "strictly decreasing heights",
+    "a deep valley between two tall towers",
+    "100,000 bars alternating between 0 and a large height"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 100,000 unit-width bars of given non-negative heights stand side by side. Above each column, water settles to the lower of the tallest bar to its left and the tallest bar to its right, minus that column's own height, never below zero. Report the total water held. Scanning both directions for every column is too slow. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A survey gives ground elevation at 100,000 evenly spaced points along a straight trench. After heavy rain, the water depth at a point equals the lower of the highest elevation upstream and the highest elevation downstream, minus the ground elevation at that point, and never less than zero. Compute the total water volume in the trench. Recomputing the upstream and downstream highs at every point is too slow. What mechanism, and what waste does it eliminate?"
+    }
+  ]
+}

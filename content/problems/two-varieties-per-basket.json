@@ -1,0 +1,69 @@
+{
+  "problemId": "two-varieties-per-basket",
+  "sourceRef": "https://leetcode.com/problems/fruit-into-baskets/",
+  "title": "Two Varieties Per Basket",
+  "statement": "A row of up to 100,000 trees runs along a path, each tree bearing exactly one variety of fruit, given as an integer label. A picker walks the row carrying two baskets; each basket holds an unlimited quantity but only a single variety. The picker must start at some tree, walk forward without skipping any tree, take one fruit from every tree passed, and stop as soon as a tree bears a variety that neither basket can hold. Report the greatest number of fruits that can be collected under these rules.",
+  "primaryPattern": "sliding_window_variable",
+  "secondary": [
+    "hashing"
+  ],
+  "redundancy": "resumming_overlapping_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "sliding_window_fixed",
+    "hashing",
+    "sliding_window_variable"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 integer labels in a row. Output: one integer count. Stripped of the story: the longest contiguous stretch containing at most two distinct labels. n at 1e5 means one pass.",
+    "brute": "For each start tree, walk forward maintaining the set of varieties seen and stop when a third appears; track the longest walk. O(n^2), or O(n^2) with a set rebuilt per start.",
+    "bottleneck": "Each start position re-walks and re-collects the variety set of a stretch that overlaps the previous start's stretch in all but one tree, so a tree in the middle of a long stretch has its variety inserted into a set once for every start to its left.",
+    "lift": "A variable-width sliding window carrying a count per variety and a running number of distinct varieties. Grow the right edge; whenever the distinct count reaches three, advance the left edge until it drops back to two.",
+    "invariant": "The window always holds at most two distinct varieties, and its left edge is the smallest index for which that holds given the current right edge.",
+    "verify": "One tree; all trees the same variety; exactly two varieties throughout, giving n; three or more varieties alternating so no window exceeds two or three trees; 100,000 trees of 100,000 distinct varieties, giving 2. Both edges advance only: O(n) time, O(1) space since the map holds at most three entries."
+  },
+  "hints": [
+    "Ignore the baskets and the walking for a moment. Written as a statement about the row of labels alone, what exactly is being maximized? Write that sentence down before doing anything else.",
+    "With the restatement in hand, you have an approach that tries each starting tree. Say what it maintains as it walks forward from a fixed start.",
+    "It rebuilds the collection of varieties seen while walking forward. Starting one tree later re-walks nearly the same trees and re-inserts nearly the same varieties into a fresh collection.",
+    "The repeated operation is recomputing the distinct-label content of a range that overlaps the previous range in all but one position.",
+    "This is a variable-width sliding window whose admissibility condition is 'at most two distinct labels inside'.",
+    "Carry a map from label to how many times it occurs in the current window, plus the map's size. Advance the right edge, adding the arriving label. While the map holds three labels, advance the left edge, decrementing the departing label's count and erasing the entry when it reaches zero. Record the width after each step. Why must the entry be erased at zero rather than left behind?",
+    "Frame: up to 1e5 integer labels in a row; the story reduces to the longest contiguous stretch containing at most two distinct labels, and that reduction is rung one. Brute: from each start, walk forward until a third label appears; O(n^2). Bottleneck: adjacent starts overlap in all but one tree, yet the variety set is rebuilt from scratch, so a middle tree is re-inserted once per earlier start. Lift: a variable-width sliding window carrying a label-to-count map. The right edge always advances; when the map's size reaches three, the left edge advances, decrementing counts and deleting zero entries, until the size is back to two. Invariant: the window always contains at most two distinct labels and its left edge is minimal for the current right edge, so the widest admissible stretch ending at each position is seen exactly once. Deleting an entry at count zero is load-bearing — leaving a zero-count key inflates the size and shrinks the window wrongly. Verify: one tree gives 1, all-same gives n, exactly two varieties gives n, an alternating three-variety pattern gives a small constant, and 1e5 distinct varieties gives 2. Both edges move right only, so O(n) time and O(1) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "The story frames a picker making choices — which baskets to use, when to stop — which is exactly the setup for an exchange argument. In fact no choice is made at all; the baskets are determined by the stretch."
+    },
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "Counting distinct labels is a frequency-map job and the map really is present in the solution. It is a supporting cast member: without a moving window the counting is redone per candidate."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Greatest number collectable' plus a walk that stops at a condition reads like an optimization over prefixes, and a state such as 'best haul ending at tree i with varieties a and b' is writable. The state space is a distraction from a strictly linear structure."
+    }
+  ],
+  "disguiseLevel": 3,
+  "misleadingFingerprint": "The entire problem is wrapped in a story about baskets and choices, which suggests greedy decision-making; the constant two never appears as 'at most two distinct values' anywhere in the wording.",
+  "edgeCases": [
+    "single tree",
+    "all trees the same variety",
+    "exactly two varieties across the whole row",
+    "three varieties in strict rotation",
+    "100,000 trees each with a distinct variety",
+    "a long run of one variety followed by a long run of another"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "A row of up to 100,000 integer labels is given. Find the length of the longest contiguous stretch containing at most two distinct labels. Only the length is required. Trying every starting position separately is too slow. Name the mechanism and the specific repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A radio scanner logs 100,000 consecutive transmissions, each tagged with a station identifier. A recording device has two tuners; once tuned, a tuner stays on its station. The device begins recording at some point in the log, records every transmission from then on, and must stop the instant a transmission comes from a station neither tuner is holding. Report the most transmissions the device could capture. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

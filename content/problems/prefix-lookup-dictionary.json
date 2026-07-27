@@ -1,0 +1,66 @@
+{
+  "problemId": "prefix-lookup-dictionary",
+  "sourceRef": "https://leetcode.com/problems/implement-trie-prefix-tree/",
+  "title": "A Dictionary That Answers Prefix Questions",
+  "statement": "Build a structure holding a growing set of lowercase words that supports three operations, with up to 200,000 operations in total and a combined length of all inserted words up to one million characters. Insert a word. Ask whether an exact word is present. Ask whether any stored word begins with a given string. The third question is the interesting one: a stored word counts as beginning with itself, and a string that is present as a prefix need not be a stored word.",
+  "primaryPattern": "trie",
+  "secondary": [],
+  "redundancy": "rewalking_shared_prefixes",
+  "phase": 2,
+  "prerequisites": [
+    "hashing",
+    "trie",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 200,000 mixed operations over lowercase words with a total inserted length of up to 1e6 characters. Output: booleans for the two query types. The prefix query is the one that a plain set cannot answer.",
+    "brute": "Store the words in a list or a set. Exact lookup is fine with a set, but the prefix query scans every stored word and compares character by character until a mismatch. O(number of words times word length) per prefix query.",
+    "bottleneck": "Every prefix query re-walks the shared leading characters of many stored words independently — asking whether anything starts with 'inte' re-reads the 'i', 'n', 't', 'e' of 'internal', 'internet', 'interval' and every other word beginning that way, once per word.",
+    "lift": "Store the words so that a shared prefix is stored, and walked, exactly once: a character-indexed tree in which each node is one prefix and its children are the possible next characters. Both queries become a single walk down the tree of length equal to the query string.",
+    "invariant": "Every node in the tree corresponds to exactly one string — the concatenation of the edge characters from the root — and that node exists if and only if some inserted word begins with that string. A flag on the node records whether it is also a complete word.",
+    "verify": "Query before any insertion; the empty string as a prefix, which must be present once anything is inserted; a word that is a strict prefix of another; inserting the same word twice; a query longer than every stored word; one million characters total. Each operation costs time proportional to the length of its string, with space proportional to the total inserted length."
+  },
+  "hints": [
+    "Three operations are listed but only one of them is hard. Identify which, and say what it asks that a plain membership structure cannot answer.",
+    "You have a working version using a set for exact lookups and a scan for the prefix question. Describe what the scan does for a query like 'inte'.",
+    "It walks 'i', then 'n', then 't', then 'e' against 'internal', and then walks the very same four characters against 'internet', and again against 'interval'. Those words agree on exactly the part being re-read.",
+    "Name the waste precisely: re-reading leading characters that many stored words have in common, once per stored word, when those characters are literally the same characters.",
+    "Store the words in a trie — a character-indexed tree where each node stands for one distinct prefix and shared prefixes occupy a single path.",
+    "Each node holds up to 26 child links plus a flag for 'a word ends here'. Insertion walks the word, creating missing children. An exact-word query walks the word and checks the flag at the end. A prefix query walks the string and succeeds if it did not fall off the tree, ignoring the flag. What is the difference between those last two queries, in one sentence?",
+    "Frame: up to 2e5 operations over lowercase words with 1e6 total inserted characters; insert, exact-match query, and prefix query. Only the prefix query resists a plain set. Brute: a set answers exact lookups but the prefix query scans every stored word comparing characters until a mismatch; O(words times length) per query. Bottleneck: the same leading characters are re-walked once per stored word that shares them, so 'inte' is re-read against 'internal', 'internet' and 'interval' separately even though those three agree on exactly that part. Lift: a trie, a character-indexed tree where each node is one distinct prefix and its children are the possible next characters, so a shared prefix is stored and traversed once. Invariant: a node exists exactly when some inserted word begins with the string spelled by the path from the root to it, and a boolean flag on the node records whether that string is itself a complete inserted word. Insertion walks the word creating missing children and sets the flag at the last node. Exact query walks the word and returns the flag. Prefix query walks the string and returns whether the walk stayed on the tree. The only difference between the two queries is whether the terminal flag is consulted. Verify: any query before an insertion returns false, the empty string is a prefix of everything once anything is inserted, a word that is a strict prefix of another must be found only after being inserted in its own right, inserting a word twice is idempotent, and a query longer than every stored word falls off the tree. Each operation is O(length of its string); space is O(total inserted characters times alphabet) with array children, or less with a map per node."
+  ],
+  "distractors": [
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "A hash set answers the exact-word query in constant time and is the obvious first structure. It cannot answer the prefix query without either scanning everything or storing every prefix of every word, which explodes the space."
+    },
+    {
+      "mechanism": "binary_search_array",
+      "temptingBecause": "Keeping the words sorted makes all words with a given prefix contiguous, so binary search finds the block boundaries and genuinely answers the prefix query. It costs a log factor per query and needs re-sorting or an ordered structure as words keep arriving."
+    },
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Sorting groups shared prefixes together, which looks like it solves the sharing problem directly. The word set grows across operations, so any sorted snapshot goes stale after the next insertion."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a query before any insertion",
+    "the empty string as a prefix query",
+    "a word that is a strict prefix of another word",
+    "the same word inserted twice",
+    "a query string longer than every stored word",
+    "one million total characters across insertions"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "Build a structure over a growing set of lowercase words supporting up to 200,000 operations: insert a word, test whether an exact word is stored, and test whether any stored word begins with a given string. Total inserted length reaches one million characters. Scanning all stored words per prefix query is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A phone's contact search must react as the user types. Contacts are added throughout the day, up to 200,000 operations in a session, with a million characters of names in total. After each keystroke the app must say whether any contact name starts with what has been typed so far, and separately whether the typed text is itself a complete stored name. Comparing the typed text against every contact on each keystroke is too slow. What mechanism, and what wasted work does it remove?"
+    }
+  ]
+}

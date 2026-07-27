@@ -1,0 +1,66 @@
+{
+  "problemId": "days-until-it-gets-warmer",
+  "sourceRef": "https://leetcode.com/problems/daily-temperatures/",
+  "title": "Days Until It Gets Warmer",
+  "statement": "A list of up to 100,000 daily temperature readings is given in chronological order. For each day, report how many days you would have to wait before encountering a strictly warmer reading. If no later day is warmer, report zero for that day. The output has one number per input day, in the same order. Readings are integers and may repeat; a reading equal to the current day's does not count as warmer.",
+  "primaryPattern": "monotonic_stack",
+  "secondary": [],
+  "redundancy": "refinding_next_greater",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "stack_basics",
+    "monotonic_stack"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 integer readings in order. Output: one waiting time per day. n at 1e5 means the total work must be near linear, so a scan per day is out.",
+    "brute": "For each day, scan forward until a strictly larger reading appears, recording the distance. O(n^2), and exactly n^2/2 on a non-increasing sequence.",
+    "bottleneck": "Every day launches its own forward scan across the same stretch of later days, so a long run of cool days is re-scanned once for each day preceding it, and every one of those scans re-establishes that the same intermediate days are not warm enough.",
+    "lift": "A monotonic stack of unresolved day indices, kept in non-increasing reading order. When a new reading arrives, it resolves and pops every unresolved day it beats, and the popped day's answer is the distance to the current index.",
+    "invariant": "The stack always holds the indices of exactly those earlier days whose answer is still unknown, and their readings are non-increasing from bottom to top — because any day beaten by a later day was already popped.",
+    "verify": "Empty input; one day; strictly increasing readings, giving all ones except the last; strictly decreasing readings, giving all zeros; all readings equal, giving all zeros; 100,000 days. Each index is pushed once and popped at most once, so the total is O(n) time and O(n) space."
+  },
+  "hints": [
+    "The list reaches 100,000 days and the output has one entry per day. Decide how much time you can afford per day on average, and note the word 'strictly' in the definition of warmer.",
+    "You have the scan-forward-from-each-day approach. Describe what happens on a long cool spell: pick a day at the start of it and say what its scan does.",
+    "Every day inside that cool spell re-scans the whole rest of the spell, and every one of those scans re-discovers the same thing — that the intermediate days are not warm enough.",
+    "Name the waste in one sentence: you are repeatedly re-searching forward for the first later value that exceeds the current one, over stretches that overlap almost completely between consecutive days.",
+    "The tool for 'first later value greater than this one' is a monotonic stack. Keep the days whose answers are still pending, and let each arriving reading resolve the ones it beats.",
+    "Sweep left to right holding a stack of indices whose readings are non-increasing. For each new day, while the stack's top has a strictly smaller reading, pop it and set its answer to the current index minus the popped index. Then push the current index. Anything left on the stack at the end gets zero. Why is the total number of pops bounded by n even though a single day can pop many entries?",
+    "Frame: up to 1e5 chronological readings, output one waiting time per day, and 'strictly warmer' means equal readings do not resolve anything. Brute: scan forward from each day until a larger reading appears, O(n^2), worst case on a non-increasing sequence. Bottleneck: consecutive days launch forward scans over nearly the same stretch, each re-establishing that the same intermediate days are too cool. Lift: a monotonic stack holding indices of days whose answers are still pending, with readings non-increasing from bottom to top. Each arriving reading pops every pending day it strictly beats and sets that day's answer to the index difference, then pushes itself. Invariant: the stack holds exactly the unresolved earlier days, and their readings are non-increasing, since any day beaten by something later was already popped. Verify: empty input, a single day, strictly increasing readings giving all ones with a trailing zero, strictly decreasing and all-equal readings giving all zeros, and 1e5 days. Every index is pushed exactly once and popped at most once, so although one day may pop many entries, the amortized cost per day is constant: O(n) time and O(n) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "'How far ahead until a condition holds' reads as a window whose right edge extends until it is satisfied, and both solutions sweep left to right with two moving parts. A window's left edge advances monotonically here in a way that would skip the pending days entirely."
+    },
+    {
+      "mechanism": "heap",
+      "temptingBecause": "Repeatedly finding the next reading that beats the current one sounds like a running extreme over a changing collection, which is a priority queue's job. It would find the largest pending reading, but the answer needs the nearest resolving day, not the largest."
+    },
+    {
+      "mechanism": "binary_search_array",
+      "temptingBecause": "'Find the first later position exceeding a value' is a boundary search, and boundary searches suggest halving. The later readings are not sorted, so there is no monotone predicate to halve on."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "empty input",
+    "single day",
+    "strictly increasing readings",
+    "strictly decreasing readings",
+    "all readings identical",
+    "a warm day followed by 99,999 cool days"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "Given up to 100,000 integer readings in order, output for each position the number of steps forward to the first strictly larger reading, or zero if none exists. Scanning forward from every position is too slow. Name the mechanism and the specific repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A trading desk records 100,000 consecutive closing prices. For each day, the analysts want the number of trading days until the next close that is strictly higher than that day's, or zero if the price never recovers within the record. Equal closes do not count as a recovery. Producing this for every day by looking ahead one day at a time is too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

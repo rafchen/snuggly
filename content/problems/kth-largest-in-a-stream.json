@@ -1,0 +1,66 @@
+{
+  "problemId": "kth-largest-in-a-stream",
+  "sourceRef": "https://leetcode.com/problems/kth-largest-element-in-a-stream/",
+  "title": "Kth Largest As Values Keep Arriving",
+  "statement": "A fixed rank k is chosen up front, along with a starting collection of up to 10,000 integers. Then up to 100,000 values arrive one at a time; after each arrival, report the kth largest value in the collection assembled so far, counting duplicates as separate values. It is guaranteed that at least k values exist at the time of every report. Values may be negative and may repeat freely.",
+  "primaryPattern": "heap",
+  "secondary": [],
+  "redundancy": "refinding_extreme_of_changing_set",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "heapq",
+    "heap_topk"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a rank k, a starting collection of up to 10,000 values, and up to 100,000 arrivals, each requiring an answer. Output: one number per arrival. The collection changes between every query, which is the decisive structural fact.",
+    "brute": "After each arrival, sort the whole collection and read off the kth largest. O(m log m) per arrival with m growing to 110,000, so up to 1e10 operations overall.",
+    "bottleneck": "Each arrival re-sorts a collection that differs from the previously sorted one by a single value, re-establishing the relative order of every pair that was already ordered a moment ago — and then throws all of it away except one entry.",
+    "lift": "Only the top k values can ever matter. Keep exactly those in a min-heap of capacity k, so its root is the answer; each arrival costs one push and at most one pop.",
+    "invariant": "The heap always holds exactly the k largest values seen so far, and its root is the smallest of those k — which is precisely the kth largest overall.",
+    "verify": "k equal to 1, giving the running maximum; k equal to the total count; all values identical; all values negative; an arrival smaller than everything, which must change nothing; 100,000 arrivals. Each arrival is O(log k), so O((n + m) log k) overall and O(k) space."
+  },
+  "hints": [
+    "Two things change here that do not change in a static problem: the collection grows, and an answer is demanded after every growth. Say what each of those independently costs you.",
+    "You have an approach that answers each query correctly. Describe what it does to the collection right before reading off the answer.",
+    "It orders the entire collection, even though the collection differs from the last time you ordered it by exactly one value, and even though you read only a single entry out of the result.",
+    "Name the waste: you are re-establishing a full ordering of a collection that changes by one element between queries, in order to extract one extreme-ish element from it.",
+    "You never need the full ordering. You need only the k largest values, and among those only the smallest. A heap of bounded size maintains exactly that under insertions.",
+    "Keep a min-heap capped at k entries. On each arrival, push the value; if the heap now holds more than k, pop the root. The root is then the answer. Why a min-heap of the largest values rather than a max-heap, and what does the root represent at every moment?",
+    "Frame: a fixed rank k, a starting collection of up to 1e4 values, and up to 1e5 arrivals each demanding the current kth largest. The collection mutates between every query — that is the fact that selects the mechanism. Brute: re-sort after every arrival and index; O(m log m) per query and up to 1e10 overall. Bottleneck: each sort re-derives the relative order of every pair in a collection that differs from the last sorted one by a single value, then discards everything but one entry. Lift: only the k largest values can ever be the answer, so keep exactly those in a min-heap of capacity k. Invariant: the heap holds exactly the k largest values seen so far and its root is the smallest of them, which is by definition the kth largest overall. A min-heap is used rather than a max-heap precisely because the element to evict when the heap overflows is the smallest of the retained values, and that is the one at the root. On each arrival, push then pop if the size exceeds k, then report the root. Verify: k of 1 gives a running maximum, k equal to the total count gives the running minimum, all-identical and all-negative values, and an arrival below everything must leave the answer unchanged — it is pushed and immediately popped. Cost is O(log k) per arrival, so O((n + m) log k) total with O(k) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "Sorting answers the question immediately and is the first thing anyone writes. It solves the static version: here the collection changes between every single query, so the sorted order is invalidated as fast as it is built."
+    },
+    {
+      "mechanism": "binary_search_array",
+      "temptingBecause": "Keeping the collection sorted and binary-searching the insertion point sounds like it maintains the order cheaply. The search is logarithmic but the insertion into an array is linear, so each arrival still costs O(m)."
+    },
+    {
+      "mechanism": "segment_tree",
+      "temptingBecause": "An order-statistic tree over the value range answers kth-largest queries under insertions and is a legitimate solution. It is much heavier than needed because k is fixed in advance, which bounds what must be retained."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "k equal to 1",
+    "k equal to the total number of values",
+    "all values identical",
+    "all values negative",
+    "an arrival smaller than every existing value",
+    "100,000 arrivals with k at 10,000"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "A rank k is fixed up front. Values arrive one at a time, up to 100,000 of them on top of a starting collection, and after each arrival you must report the kth largest value seen so far, counting duplicates separately. Re-sorting after every arrival is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A leaderboard displays only the score currently sitting in tenth place. Scores arrive continuously — up to 100,000 submissions over a contest — and the tenth-place figure must be shown immediately after every submission. Duplicate scores are common and count as separate entries. Re-ranking the whole field after each submission is far too slow. What mechanism applies, and what wasted work does it eliminate?"
+    }
+  ]
+}

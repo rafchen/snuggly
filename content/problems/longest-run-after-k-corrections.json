@@ -1,0 +1,66 @@
+{
+  "problemId": "longest-run-after-k-corrections",
+  "sourceRef": "https://leetcode.com/problems/max-consecutive-ones-iii/",
+  "title": "Longest Run Once k Corrections Are Allowed",
+  "statement": "A sequence of up to 100,000 entries is given, each either good or faulty, together with a budget k between 0 and the length of the sequence. You may repair at most k faulty entries, converting them to good; you choose which ones. After the repairs, report the length of the longest contiguous stretch of good entries you could achieve. You do not need to report which entries to repair, only the achievable length.",
+  "primaryPattern": "sliding_window_variable",
+  "secondary": [],
+  "redundancy": "resumming_overlapping_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "sliding_window_fixed",
+    "sliding_window_variable"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 good/faulty entries and a repair budget k. Output: one integer length. The repairs are free to choose, so the real question is which contiguous stretches contain at most k faulty entries — and 1e5 means one pass.",
+    "brute": "For each start position, extend rightward counting faulty entries and stop once the count exceeds k. O(n^2) in the worst case, and worse if the faulty count is retallied per candidate.",
+    "bottleneck": "Each start position re-counts the faulty entries inside a stretch that overlaps the previous start's stretch in all but one position, so a faulty entry in the middle of a long stretch is counted once for every start position to its left.",
+    "lift": "A variable-width sliding window whose admissibility condition is 'at most k faulty entries inside'. Grow the right edge always; when the faulty count exceeds k, advance the left edge until it drops back to k.",
+    "invariant": "The window always contains at most k faulty entries, and its left edge is the smallest index for which that holds given the current right edge — so no longer admissible stretch ends here.",
+    "verify": "k equal to 0, which reduces to the longest run of good entries; k equal to n, giving the whole sequence; all entries faulty; all entries good; a single entry; 100,000 entries alternating good and faulty. Both edges only advance: O(n) time, O(1) space."
+  },
+  "hints": [
+    "Restate the goal without the word 'repair'. If you get to choose which faulty entries to fix, what property must a stretch have for it to be achievable within the budget?",
+    "Once you have restated it as a property of stretches, you have a working approach that tries every start. Describe what it computes at each start.",
+    "It counts the faulty entries inside the stretch. When the start moves one position right, that count is rebuilt over a range differing by a single element, so an entry near the end is counted once per start position before it.",
+    "The waste is recomputing a count over a range that overlaps the previous range almost entirely. The count changes by at most one when either end moves.",
+    "This is the variable-width sliding window with the admissibility test 'faulty count at most k'.",
+    "Advance the right edge one step at a time, incrementing a faulty counter when a faulty entry enters. Whenever the counter exceeds k, advance the left edge, decrementing the counter when a faulty entry leaves, until the counter is back to k. Record the width after every step. Why is it enough to shrink only until the counter is back within budget, rather than searching for the best left edge?",
+    "Frame: 1e5 good/faulty entries with a repair budget k; because you choose the repairs freely, the question is exactly 'longest contiguous stretch containing at most k faulty entries'. That reframing is rung one and it is where most of the difficulty lives. Brute: for each start, extend while the faulty count stays within k; O(n^2). Bottleneck: consecutive starts differ by one element yet the faulty count is recomputed over the whole stretch, so a middle faulty entry is counted once per earlier start. Lift: a variable-width sliding window with a running faulty counter. The right edge always advances; when the counter exceeds k the left edge advances until it does not. Invariant: the window always holds at most k faulty entries and its left edge is minimal for the current right edge, so the widest admissible stretch ending at each position is examined exactly once. Shrinking only to restore the budget is sufficient because widening the left edge further can only shorten the answer. Verify: k of 0 reduces to the longest good run, k of n returns the whole sequence, all-faulty returns k capped at n, all-good returns n, and alternating entries returns 2k+1 capped at n. Both edges move right only, so O(n) time and O(1) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "A budget k that gets spent across positions is the knapsack fingerprint, and a state like 'best run ending at i having spent j repairs' is easy to write down. It is a correct O(nk) solution that a one-pass argument makes unnecessary."
+    },
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "Counting faulty entries in a range is precisely what a prefix count answers in constant time, and combined with binary search it solves the problem. It is a real solution at an extra log factor and it hides the simpler monotone structure."
+    },
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "'You may repair at most k' invites reasoning about which repairs are individually best, which is exchange-argument territory. The choice of repairs is actually forced once the stretch is chosen, so there is nothing greedy to prove."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The budget k reads as a knapsack dimension and pulls hard toward a two-dimensional DP; nothing in the wording says the repairs inside a chosen stretch are forced.",
+  "edgeCases": [
+    "k equal to 0",
+    "k equal to the sequence length",
+    "all entries faulty",
+    "all entries good",
+    "single entry",
+    "100,000 entries alternating good and faulty"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "A sequence of up to 100,000 entries is marked good or faulty. You may convert at most k faulty entries to good, choosing freely which ones. Report the longest contiguous run of good entries achievable afterwards. Only the length is needed. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A quality inspector walks a production line of 100,000 items, each stamped pass or fail. Management will authorize at most k reworks, and a rework turns a failed item into a passing one. They want to advertise the longest unbroken stretch of passing items that could exist after the reworks are applied, and they get to pick which items to rework. Report that length. Evaluating every possible stretch separately is too slow. What mechanism, and what work does it save?"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "problemId": "best-total-with-no-two-adjacent",
+  "sourceRef": "https://leetcode.com/problems/house-robber/",
+  "title": "Best Total With No Two Adjacent",
+  "statement": "A row of up to 100,000 non-negative values is given. Choose a set of positions with the largest possible total, subject to the rule that no two chosen positions may be next to each other in the row. Positions two or more apart may both be chosen. Report only the total, not the positions. Choosing nothing is allowed and gives a total of zero, which is the answer when the row is empty.",
+  "primaryPattern": "dynamic_programming",
+  "secondary": [],
+  "redundancy": "recomputing_subproblems",
+  "phase": 4,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking",
+    "memoization",
+    "dp_1d"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 non-negative values in a row. Output: one number, the best total under the no-two-adjacent rule. n at 1e5 demands a single pass, so the recursion must collapse.",
+    "brute": "Recurse from the left: at each position either take it and skip the next, or skip it and move on; return the better of the two. Two branches per position gives roughly two-to-the-n calls.",
+    "bottleneck": "The two branches from position i both eventually recurse on position i+2, and every position is re-solved once for every distinct sequence of earlier decisions that lands on it — the answer for the tail starting at position 40 is recomputed thousands of times even though it does not depend at all on how position 40 was reached.",
+    "lift": "The value of the tail starting at position i depends only on i, so store it the first time it is computed and read it thereafter. Memoizing the brute force turns the exponential tree into one computation per position, and since each answer needs only the two after it, two running values suffice.",
+    "invariant": "The stored value at position i is always the best achievable total using only positions i and later; equivalently, sweeping from the right, the pair of running values always holds the best totals for the two suffixes just processed.",
+    "verify": "An empty row, giving zero; one value; two values, giving the larger; all values zero; a row where taking every other position is optimal; a row where skipping one position to take two large neighbours-once-removed wins; 100,000 values. One pass, O(n) time and O(1) space with the two-variable form."
+  },
+  "hints": [
+    "Write the choice available at a single position, in words. There are exactly two options — name them and say what each one leaves behind as a smaller version of the same problem.",
+    "You have the two-branch recursion and it is correct. Draw its call tree three levels deep and look at what appears more than once.",
+    "Both branches from position i eventually ask for the answer starting at position i+2, and every position is re-solved once for each distinct sequence of earlier choices reaching it.",
+    "Name the waste: recomputing the answer to a smaller version of the problem that has already been solved, where the answer depends only on the starting position and not on how you arrived there.",
+    "Store each position's answer the first time it is computed and read it afterwards — memoization of the brute force. Then observe that each answer uses only the two positions after it.",
+    "Add a cache keyed on the position, or equivalently sweep from the right holding just two running values: the best total for the suffix starting one position ahead, and for the one after that. At each position take the larger of skipping it, or taking it plus the second value. Why is the position enough to identify a subproblem, when the set of choices made so far is not part of it?",
+    "Frame: up to 1e5 non-negative values with a no-two-adjacent rule; output is the best total, and 1e5 demands linear work. Brute: recurse from the left, taking a position and skipping the next, or skipping it; two branches per position, roughly two-to-the-n calls. Bottleneck: both branches from position i converge on the subproblem at i+2, and each position's answer is recomputed once per distinct earlier decision sequence that reaches it — thousands of times for a middle position — even though the answer depends only on the position. Lift: memoize. The state is the starting position alone, because the rule only forbids adjacency with the immediately previous choice, and that constraint is already discharged by the branch that skipped ahead. Invariant: the cached value at i is the best total using only positions i and later. Since the recurrence reads exactly two positions ahead, the cache collapses to two running values swept from the right, giving O(1) space. At each position the answer is the larger of the value one ahead, or the current value plus the value two ahead. Verify: an empty row gives zero, one value gives itself, two values give the larger, all zeros give zero, and rows where alternating or skipping-two is optimal. Time O(n), space O(1). This is the shape of every one-dimensional recurrence: derive it as a brute force, notice the overlap, cache, then collapse the cache to a rolling window."
+  ],
+  "distractors": [
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "Repeatedly taking the largest remaining value and forbidding its neighbours feels locally sensible and is easy to code. No exchange argument supports it: a row like 2, 3, 2 defeats it immediately, since taking the 3 forfeits both 2s."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "The adjacency rule is a local constraint over a contiguous row, which is window-flavoured, and the sweep really does look at neighbouring positions. Nothing contiguous is being maintained — the chosen positions are deliberately non-contiguous."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "Enumerating take-or-skip decisions with undo is precisely the brute force, and it is where the derivation legitimately starts. It becomes the wrong final answer the moment you notice the subproblems repeat."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "an empty row",
+    "a single value",
+    "two values",
+    "all values zero",
+    "a row where alternate positions are optimal",
+    "a row of the form 2, 3, 2 where the greedy choice loses",
+    "100,000 values"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given up to 100,000 non-negative values in a row, choose positions with the largest total such that no two chosen positions are adjacent. Report the total only; choosing nothing is allowed. Exploring take-or-skip decisions recursively is exponential. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A city plans to install noise sensors on 100,000 consecutive lamp posts along one street. Each post has a known coverage value. Two sensors on neighbouring posts interfere and cannot both be installed, but posts two or more apart are fine. Maximize the total coverage value and report it. Trying every valid installation pattern is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

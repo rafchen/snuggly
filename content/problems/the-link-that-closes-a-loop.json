@@ -1,0 +1,67 @@
+{
+  "problemId": "the-link-that-closes-a-loop",
+  "sourceRef": "https://leetcode.com/problems/redundant-connection/",
+  "title": "The Link That Closes A Loop",
+  "statement": "A network of n items, numbered from one to n with n up to 1,000, was built by starting from a structure that had no loops and connecting every item, then adding exactly one extra link. You are given all n links in the order they were added, each joining two distinct items, with no link repeated. Report the link whose removal would leave the network loop-free and still fully connected. If more than one link qualifies, report the one that appears latest in the input order.",
+  "primaryPattern": "union_find",
+  "secondary": [
+    "dfs"
+  ],
+  "redundancy": "remerging_overlapping_groups",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "union_find"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: n links over n items, n up to 1,000, forming a connected structure with exactly one loop. Output: one link. Because links arrive in a stated order and the answer is the latest qualifying one, the arrival order is part of the problem.",
+    "brute": "For each link from the last backwards, remove it and test whether the remainder is connected and loop-free by a full traversal. O(n) per test times O(n) links gives O(n^2), plus a traversal each time.",
+    "bottleneck": "Each removal test re-traverses the entire network from scratch, re-establishing the same reachability facts about the links that were not removed — the connectivity of the untouched part is recomputed once per candidate link.",
+    "lift": "Process the links in arrival order, maintaining which items are already connected to which. The first link whose two endpoints are already connected is the one that closes the loop; since only one loop exists, that link is the answer.",
+    "invariant": "Before processing link i, the structure records exactly the connectivity implied by links one through i-1; therefore link i closes a loop precisely when its endpoints already share a representative.",
+    "verify": "The smallest case, a triangle of three links; a loop formed by the very first two links plus a third; a long chain closed by the final link; n equal to 1,000. Each link costs an effectively constant merge or query, so O(n) overall."
+  },
+  "hints": [
+    "Count the items and the links. What does having exactly as many links as items tell you about the structure, and how many loops can it contain?",
+    "You have an approach that tests candidate links by removing them. Say what a single test costs and what it walks over.",
+    "It walks the whole network to check connectivity. The next test removes a different link and walks almost exactly the same edges again, re-deriving the same reachability facts.",
+    "Name the waste: recomputing which items can reach which, from scratch, once per candidate, when the candidates differ by a single link.",
+    "Process the links in arrival order and maintain the grouping of items that are already connected, merging groups as links arrive. A union-find structure does that with effectively constant cost per link.",
+    "Give each item a parent pointer to itself. For each link in order, find both endpoints' representatives; if they already match, this link closes the loop and is the answer, otherwise merge the two groups. Why does the very first such link have to be the answer, given the problem's tie rule?",
+    "Frame: n links over n items with n up to 1,000, connected, exactly one loop, links given in arrival order; output is one link, the latest qualifying one. Having as many links as items in a connected structure forces exactly one loop, which is rung one. Brute: remove each link from the last backwards and test connectivity and loop-freeness by traversal; O(n^2) with a full walk per candidate. Bottleneck: each test re-traverses the whole network, re-deriving the reachability of the untouched links once per candidate. Lift: union-find processed in arrival order. Invariant: before handling link i, the structure records exactly the connectivity implied by links one through i-1, so link i closes a loop precisely when its two endpoints already share a representative. Since exactly one loop exists, exactly one link in arrival order finds its endpoints already connected, and that link is both the first and the latest qualifying one — the tie rule is satisfied automatically. Use union by size and path compression to keep each operation effectively constant. Verify: a triangle of three links returns the third, a loop closed by the first two links plus a third, a long chain closed by the final link, and n at 1,000. Time O(n) with near-constant operations, space O(n)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "'Find the edge that creates a cycle' is textbook depth-first search with colouring, and a traversal really does locate the loop. It ignores the arrival order that the tie rule depends on and needs extra bookkeeping to recover which edge came last."
+    },
+    {
+      "mechanism": "topological_sort",
+      "temptingBecause": "Cycle detection is what a topological ordering fails on, so it feels like the right detector. Topological ordering is a directed-graph tool and these links are undirected, where every edge would look like a two-cycle."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "'Try removing each link and see whether the result is valid' is exactly the try-and-undo shape. It is the brute force being escaped, and it re-explores the same structure once per candidate."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "'Detect a cycle' points at depth-first traversal first, and the incremental arrival of links — the detail that makes the grouping structure the right answer — is stated as an ordering rule rather than as a hint about the algorithm.",
+  "edgeCases": [
+    "a triangle of exactly three links",
+    "a loop closed by the earliest possible link",
+    "a long chain closed by the final link",
+    "two items with a loop of length three attached",
+    "n equal to 1,000",
+    "the loop involving the highest-numbered items"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "You are given n undirected links over n items, listed in the order they were added; the result is connected and contains exactly one loop. Report the link whose removal leaves the network connected and loop-free, choosing the one added latest if several qualify. Testing each link by re-traversing the network is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "An electrician wired 1,000 junction boxes with 1,000 cables, logging each cable as it was pulled. The intended layout had no loops, but one cable too many was run, creating exactly one closed circuit. Identify the cable that should be pulled out so the remaining wiring still reaches every box and contains no closed circuit; if several would work, name the one pulled most recently. Re-tracing the entire wiring for each candidate cable is too slow. What mechanism, and what waste does it remove?"
+    }
+  ]
+}

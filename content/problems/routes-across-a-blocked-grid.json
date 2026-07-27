@@ -1,0 +1,70 @@
+{
+  "problemId": "routes-across-a-blocked-grid",
+  "sourceRef": "https://leetcode.com/problems/unique-paths-ii/",
+  "title": "Routes Across A Grid With Blockers",
+  "statement": "A grid of up to 100 by 100 cells is given, each cell either passable or blocked. Starting at the top-left cell and moving only one step right or one step down at a time, count the distinct routes that reach the bottom-right cell without entering any blocked cell. Two routes differ if they differ at any step. If the starting or ending cell is blocked the answer is zero. The count fits in a 64-bit integer.",
+  "primaryPattern": "dynamic_programming",
+  "secondary": [],
+  "redundancy": "recomputing_subproblems",
+  "phase": 4,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking",
+    "memoization",
+    "dp_2d_grid"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a grid of up to 100 by 100 cells with blockers; movement is right or down only. Output: a count of distinct routes. The one-directional movement is the decisive structural fact — it makes the cells orderable.",
+    "brute": "Recurse from the start: from a cell, the number of routes is the number from the cell to its right plus the number from the cell below, with blocked cells contributing zero. Exponential, since the two branches overlap heavily.",
+    "bottleneck": "The route count from a given cell depends only on that cell, yet the recursion recomputes it once for every distinct route prefix that arrives there — a cell in the middle of a 100 by 100 grid is re-solved an astronomical number of times.",
+    "lift": "Cache each cell's route count the first time it is computed. Because movement is only right or down, the cells can also be filled directly in row order from the start, each cell reading the two already-computed neighbours above and to its left.",
+    "invariant": "The stored value at a cell is always the number of blocker-free routes from the start to that cell; a blocked cell stores zero, and the first row and column accumulate along a single direction until the first blocker.",
+    "verify": "A one-by-one passable grid, giving one; a blocked start or a blocked end, giving zero; a single row, giving one unless it holds a blocker; a fully passable grid, giving the standard binomial count; a grid fully blocked across one row, giving zero; 100 by 100 cells. Quadratic time, and linear space with a rolling row."
+  },
+  "hints": [
+    "Two constraints shape everything: the allowed moves, and the grid size. State the allowed moves precisely and say what they imply about whether a cell can ever be revisited.",
+    "You have the recursion that adds the routes from the cell to the right and from the cell below. Draw the call tree two levels deep and look for repeats.",
+    "The cell diagonally down-right is reached by both branches, and every cell in the interior is reached by an enormous number of distinct route prefixes, each of which recomputes the same count from scratch.",
+    "Name the waste: recomputing the number of routes from a cell that has already been computed, when that number depends only on the cell and not on how you arrived at it.",
+    "Store each cell's count the first time it is computed — memoization of the brute force. Then notice that because movement is one-directional, you can fill the cells in row order instead of recursing.",
+    "Set the start to one if passable. Sweep row by row, left to right, setting each blocked cell to zero and each passable cell to the sum of the values above it and to its left, treating off-grid neighbours as zero. Answer at the bottom-right. Why does filling in row order never read a cell that has not been filled yet?",
+    "Frame: a grid of up to 100 by 100 cells with blockers, moving only right or down; output is the number of blocker-free routes from corner to corner. One-directional movement is decisive: no cell can be revisited, so the cells admit a fill order. Brute: recurse, adding the counts from the right neighbour and the lower neighbour; exponential due to heavy branch overlap. Bottleneck: a cell's count depends only on the cell, yet it is recomputed once per route prefix arriving there — astronomically often in the interior of a 100 by 100 grid. Lift: memoize on the cell, then flip to a direct sweep. Invariant: the stored value at a cell is the number of blocker-free routes from the start to it; blocked cells store zero, and off-grid neighbours contribute zero. Filling row by row and left to right is safe precisely because the two contributors to a cell are the one above and the one to its left, both of which are filled earlier in that order — which is exactly what the right-or-down movement rule guarantees. Verify: a one-by-one passable grid gives one, a blocked start or end gives zero, a single row gives one unless it holds a blocker, a fully passable grid gives the binomial coefficient, and a fully blocked row gives zero. Time O(rows times columns); space collapses to one row since each cell reads only the row above and its left neighbour. Counts can reach the hundreds of trillions at 100 by 100, so use 64-bit arithmetic."
+  ],
+  "distractors": [
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "Grid movement toward a target is layer-expansion imagery and a queue does reach every cell. Layers count steps; here every route has the same number of steps and what is wanted is how many routes exist, not how long they are."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "Enumerating the routes one at a time and counting them is the honest brute force and it is where the derivation starts. It stops being the answer as soon as you notice that the count from a cell does not depend on the prefix that reached it."
+    },
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "The sweep looks like an accumulation over a grid, and two-dimensional prefix sums are filled by a similar-looking double loop. A prefix sum aggregates given values; here each value is produced by the recurrence itself."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a one-by-one passable grid",
+    "a blocked starting cell",
+    "a blocked ending cell",
+    "a single row with no blockers",
+    "a single row containing a blocker",
+    "a fully passable 100 by 100 grid",
+    "a row that is entirely blocked"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "In a grid of up to 100 by 100 cells, some blocked, count the distinct routes from the top-left to the bottom-right that move only right or down and never enter a blocked cell. Enumerating routes one at a time is exponential. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A robot on a 100 by 100 factory floor may only move one bay east or one bay south per step, and some bays are occupied by machinery it cannot cross. Count how many distinct sequences of moves take it from the north-west bay to the south-east bay. Two sequences differ if they differ at any step. Enumerating routes individually is hopeless. What mechanism applies, and what wasted work does it eliminate?"
+    }
+  ]
+}

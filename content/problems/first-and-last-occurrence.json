@@ -1,0 +1,62 @@
+{
+  "problemId": "first-and-last-occurrence",
+  "sourceRef": "https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/",
+  "title": "First And Last Position Of A Repeated Value",
+  "statement": "An array of up to 100,000 integers is given in non-decreasing order, so equal values sit next to each other in one contiguous block. Given a target value, report the position of the first occurrence and the position of the last occurrence of that target, or a pair of negative-one values when the target is absent. The array may contain long runs of the same value and may be entirely one value. The order is stated as a guarantee, not as an accident of the data.",
+  "primaryPattern": "binary_search_array",
+  "secondary": [],
+  "redundancy": "relinear_search_sorted",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "binary_search_array"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 integers in non-decreasing order plus a target. Output: the first and last index of the target, or a pair of negative ones. The sortedness is explicitly guaranteed, which is the problem's central gift.",
+    "brute": "Scan from the left until the target appears, then scan from the right until it appears. O(n) per query, and O(n) even when the target is absent.",
+    "bottleneck": "The scan re-examines positions that the ordering already rules out: after seeing a value smaller than the target at position i, every position before i is known to be smaller too, yet the scan visits them one at a time and re-derives that same fact at each step.",
+    "lift": "Binary search over the index space. Two searches — one for the leftmost index whose value is at least the target, one for the leftmost index whose value exceeds it — pin both boundaries in logarithmic time.",
+    "invariant": "The answer boundary always lies within the half-open range from lo to hi; each step evaluates the midpoint and discards a half that provably cannot contain the boundary because the ordering fixes the comparison result for everything in it.",
+    "verify": "Empty array; target absent and smaller than everything; target absent and larger than everything; target absent but sitting between two present values; array entirely of the target; single element. Two searches at O(log n) each, O(1) space."
+  },
+  "hints": [
+    "Read the ordering clause again and notice it is stated as a guarantee. When a problem promises order, that promise is the intended tool, not background colour. What does knowing one comparison result tell you about other positions?",
+    "You have a working scan. Take the moment it examines position 5,000 and finds a value smaller than the target. What does that single observation already prove about positions 0 through 4,999?",
+    "It proves all of them are smaller too — yet the scan will still visit every one of them if it starts from the left, re-deriving a fact that one comparison already settled.",
+    "Name the waste: examining positions one at a time in an ordered collection, when a single comparison eliminates an entire side of the current position.",
+    "Binary search over the index space. The subtlety is that you need two boundaries, not one, so decide what predicate each search should be looking for.",
+    "Run one binary search for the leftmost index whose value is at least the target, and another for the leftmost index whose value is strictly greater. The first is the answer's start; one before the second is the answer's end; if the first index is out of range or its value is not the target, the target is absent. Why is searching for a boundary more robust than searching for 'any occurrence and then walking outward'?",
+    "Frame: up to 1e5 integers in non-decreasing order plus a target, output is the first and last index or a pair of negative ones; the guaranteed order is the gift. Brute: scan from each end, O(n). Bottleneck: one comparison at a position settles the comparison result for every position on one side, yet the scan re-derives it one position at a time. Lift: binary search over indices, run twice for two different boundaries — the leftmost index with value at least target, and the leftmost index with value strictly greater than target. Invariant: the sought boundary always lies within the half-open range lo to hi, and each step discards a half whose comparison results are already determined by the ordering. Verify: empty array, target below everything, target above everything, target absent but between two present values, an array entirely of the target, and a single element. Searching for boundaries rather than for any occurrence avoids the trap where you find an occurrence in the middle of a run of 1e5 equal values and then walk outward linearly, which reintroduces the O(n) you just removed. Two logarithmic searches, O(1) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Sorted input plus a request for two positions is the converging-pointers fingerprint, and the answer really is a pair. Converging inward is still linear, so it does not remove the actual waste."
+    },
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "A map from value to its list of positions answers this in constant time per query, and it feels like the obvious lookup structure. Building it costs a full linear pass and throws away the ordering the problem went out of its way to promise."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "empty array",
+    "target smaller than every element",
+    "target larger than every element",
+    "target absent but between two present values",
+    "array consisting entirely of the target",
+    "single element equal to the target",
+    "100,000 copies of the target"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "A non-decreasing array of up to 100,000 integers and a target value are given. Report the first and last index at which the target appears, or a pair of negative ones if it does not appear. The array may be one long run of a single value. Scanning is too slow. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A log file holds 100,000 events, already written in non-decreasing timestamp order because the writer appends only. Given a timestamp, report the byte offsets of the first and last event carrying exactly that timestamp, or report that no event does. Many events can share a timestamp, sometimes the whole file. The file is too large to scan per query. What mechanism, and what wasted work does it remove?"
+    }
+  ]
+}

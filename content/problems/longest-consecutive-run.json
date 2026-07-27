@@ -1,0 +1,65 @@
+{
+  "problemId": "longest-consecutive-run",
+  "sourceRef": "https://leetcode.com/problems/longest-consecutive-sequence/",
+  "title": "Longest Assemblable Run Of Consecutive Numbers",
+  "statement": "A bag of up to 100,000 integers arrives in no particular order and may contain repeats. Consider the longest stretch of consecutive whole numbers you could assemble using only numbers present in the bag; the numbers need not sit next to each other in the input, they only need to be present. From a bag holding 12, 9, 11, 4, 10 and 11 you can assemble 9, 10, 11, 12, a stretch of length four. Report the length of the longest such stretch. The intended running time is linear in the size of the bag.",
+  "primaryPattern": "hashing",
+  "secondary": [],
+  "redundancy": "reseeking_membership",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "hashing"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: unordered multiset of up to 100,000 integers. Output: one number, the longest run of consecutive values that are all present. Linear budget means no n log n sort.",
+    "brute": "For each value v in the bag, walk upward: check whether v+1 is present by scanning the bag, then v+2, and so on. O(n) per membership check gives O(n^3) worst case, or O(n^2) if you first dedupe by scanning.",
+    "bottleneck": "Two repetitions stack. Every 'is v+1 in the bag' question is answered by rescanning the whole bag, and every member of a long run starts its own upward walk, so a run of length L is re-walked L times from L different starting points.",
+    "lift": "A hash set makes membership constant time, and a single guard — only begin a walk at a value whose predecessor is absent from the set — makes each run get walked exactly once.",
+    "invariant": "Every value in the set is the start of at most one upward walk, and that walk happens only if v-1 is not in the set; therefore across the whole algorithm each value is stepped over at most twice, once as a start candidate and once inside a walk.",
+    "verify": "Empty bag returns 0; a single value returns 1; all values identical returns 1; a bag that is one long run of 100,000 values still costs linear time because only its minimum starts a walk."
+  },
+  "hints": [
+    "The constraint line asks for time linear in the size of the bag. What extremely natural first move does that forbid, and are you sure you were not about to make it?",
+    "Suppose someone handed you an oracle that instantly tells you whether a given number is in the bag. Sketch the algorithm you would write with that oracle, then find where it is still doing too much.",
+    "With the oracle, you would start at each number and step upward until the next number is missing. Consider a run of length 50: what does that cost you, and how many times does the middle of that run get stepped over?",
+    "Two distinct wastes are stacked here. One is re-searching the collection to ask whether a number is present. The other is re-walking the same ascending run once for every member of it instead of once in total.",
+    "Kill the first waste with a hash set built in one pass, so membership is constant time. Kill the second with a guard on where a walk is allowed to begin.",
+    "Load every value into a hash set. Then for each value v, only start counting upward if v minus one is absent from the set — meaning v is the true left end of its run. Convince yourself why that guard makes the total number of upward steps linear rather than quadratic.",
+    "Frame: an unordered multiset of up to 1e5 integers, output is a single length, and the linear budget rules out sorting. Brute: for each value walk upward, testing membership by rescanning; cubic or quadratic. Bottleneck: membership is answered by scanning, and a run of length L is traversed once from each of its L members. Lift: a hash set collapses membership to O(1), and the guard 'only start a walk when v-1 is absent' means only a run's true minimum ever launches a traversal. Invariant: each value is the start of at most one walk and is visited by at most one walk, so total steps are bounded by 2n. Verify: empty gives 0, singleton gives 1, all-identical gives 1 because duplicates collapse in the set, and one long 1e5-element run still runs linearly since only its minimum starts. Time O(n), space O(n)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "The word 'consecutive' pulls hard toward ordering the values first, after which the answer is a trivial single scan. It is correct and it is the wrong answer here, because it costs n log n."
+    },
+    {
+      "mechanism": "union_find",
+      "temptingBecause": "Adjacent integers feel like they should be merged into groups, and the answer is the size of the biggest group — which is exactly the union-find fingerprint. It works, but it is heavier machinery than the problem needs."
+    },
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "The word 'longest' plus the word 'run' is the variable-window phrase pair, but there is no window here: the run is assembled from scattered positions, not a contiguous slice."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The word 'consecutive' reads as an instruction to sort; only the stated linear-time budget rules that out, and learners routinely skim past it.",
+  "edgeCases": [
+    "empty bag",
+    "single value",
+    "all values identical",
+    "already one unbroken run of length n",
+    "n at 100,000 with every value distinct and no two consecutive",
+    "negative values crossing zero"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 100,000 integers arrive in arbitrary order, possibly with duplicates. Find the length of the longest set of consecutive integers all of which appear somewhere in the input. Position in the input is irrelevant; only presence matters. The solution must run in time linear in the number of inputs. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A collector owns 100,000 stamps, each printed with a year. She wants the longest unbroken span of years for which she owns at least one stamp — a span of 1961 through 1968 counts as eight even if her album is shuffled and she owns four copies of 1963. Duplicates and gaps are common. She needs the answer in one pass over the pile because re-sorting the album is expensive. What is the mechanism, and what wasted work does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "problemId": "longest-stretch-within-a-spread",
+  "sourceRef": "https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit/",
+  "title": "Longest Stretch Whose Spread Stays Under A Cap",
+  "statement": "An array of up to 100,000 integers is given together with a cap. Consider any contiguous stretch and let its spread be the difference between its largest and its smallest value. Report the length of the longest stretch whose spread does not exceed the cap. A stretch of one entry has spread zero and is always acceptable, so the answer is at least one for any non-empty input. Values may be negative and the cap is non-negative.",
+  "primaryPattern": "monotonic_deque",
+  "secondary": [
+    "sliding_window_variable"
+  ],
+  "redundancy": "retracking_order_with_lookup",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "stack_basics",
+    "monotonic_stack",
+    "sliding_window_fixed",
+    "monotonic_deque",
+    "sliding_window_variable"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 integers and a non-negative cap. Output: one integer length. The admissibility test involves two extremes of the current stretch at once, which is what distinguishes this from a plain counting window.",
+    "brute": "For each start, extend rightward tracking the running maximum and minimum, stopping when their difference exceeds the cap. O(n^2).",
+    "bottleneck": "Every start re-derives the maximum and the minimum of a stretch that overlaps the previous start's stretch in all but one entry, and when the left edge advances past the current extreme, the brute force has no record of the next-best candidate and must rescan the whole window to find it.",
+    "lift": "Two monotonic deques over the same window — one decreasing so its front is the window's maximum, one increasing so its front is the window's minimum. The admissibility test is then a single subtraction, and the left edge advances by evicting from both fronts.",
+    "invariant": "Each deque holds exactly the window's non-dominated indices for its respective extreme, ordered so that the front is the extreme; therefore the front difference always equals the current window's spread.",
+    "verify": "Cap of zero, which reduces to the longest run of equal values; cap larger than the whole range, giving n; single entry; all values identical; strictly increasing values; 100,000 entries. Each index enters and leaves each deque once: O(n) time and O(n) space."
+  },
+  "hints": [
+    "The admissibility test mentions two quantities about a stretch, not one. Name them, and note that both can change when either edge of the stretch moves.",
+    "You have the try-every-start approach. Describe what it tracks while extending, and what happens to those tracked values when the start moves forward by one.",
+    "Extending re-derives the largest and smallest values of a stretch that barely changed. Worse: when the start passes the entry that was the current extreme, nothing remembers what the second-best candidate was, so the entire window gets rescanned.",
+    "State it precisely: you are re-finding two extremes of a collection that changes by one element at a time, and separately you are losing the ordering information that would tell you which candidate takes over when an extreme leaves.",
+    "You need a structure that reports an extreme in constant time and can discard from the arrival end when a better value comes in and from the departure end when an element ages out. Two monotonic deques, one for each extreme, running over the same window.",
+    "Advance the right edge, pushing the new index onto both deques after evicting dominated indices from each back — the decreasing deque evicts values at or below the arrival, the increasing one evicts values at or above it. While the front difference exceeds the cap, advance the left edge and drop any front index that has fallen behind it. Record the width each step. Why is it safe to discard an evicted index permanently rather than store it for later?",
+    "Frame: up to 1e5 integers and a non-negative cap; output is the length of the longest contiguous stretch whose maximum minus minimum stays within the cap. The two-sided test is the key structural fact. Brute: from each start, extend while tracking a running maximum and minimum; O(n^2). Bottleneck: consecutive starts overlap in all but one entry yet both extremes are re-derived, and when the left edge passes the current extreme there is no record of the runner-up, forcing a full rescan of the window. Lift: two monotonic deques over the same window, one decreasing whose front is the window maximum and one increasing whose front is the window minimum, making the spread a single subtraction. Invariant: each deque holds exactly the window's non-dominated indices for its extreme, in monotone order, so the fronts are the true extremes. A back eviction is permanent and safe because an index dominated by a later arrival can never again be the extreme while that newer, better, longer-lived index is present. Verify: a cap of zero reduces to the longest run of equal values, a cap exceeding the full range gives n, a single entry gives 1, all-identical values give n, and strictly increasing values give a stretch bounded by the cap. Every index enters and leaves each deque once, so O(n) time and O(n) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "The outer loop genuinely is a variable-width window, so the family is right and the answer feels complete. The window alone cannot maintain the admissibility test in constant time — what is missing is a structure that survives the left edge eating the current extreme."
+    },
+    {
+      "mechanism": "heap",
+      "temptingBecause": "Two heaps give the running maximum and minimum of a changing collection, and with lazy deletion this works. It pays a log factor and needs bookkeeping to discard elements that have left the window."
+    },
+    {
+      "mechanism": "binary_search_answer",
+      "temptingBecause": "'Longest stretch such that a predicate holds' is monotone-feasibility phrasing, and admissibility really is monotone in width. It solves the problem at an extra log factor by testing a length and sweeping, which hides the linear structure."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "It reads as a plain variable-width window problem, and most learners stop at that classification; nothing in the wording hints that maintaining the window's admissibility is itself the hard part.",
+  "edgeCases": [
+    "cap of zero",
+    "cap larger than the full value range",
+    "single entry",
+    "all values identical",
+    "strictly increasing values",
+    "all values negative",
+    "100,000 entries alternating between two far-apart values"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given up to 100,000 integers and a non-negative cap, find the length of the longest contiguous stretch in which the difference between the largest and smallest value does not exceed the cap. Trying every starting position is too slow. Name the mechanism and, precisely, the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A furnace logs one temperature per minute for 100,000 minutes. A batch of glass is usable only if, throughout its entire firing, the temperature never varied by more than a given tolerance between its hottest and coldest moment. Firings are contiguous spans of the log. Report the longest usable firing. Checking every candidate span separately is far too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

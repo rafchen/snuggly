@@ -1,0 +1,70 @@
+{
+  "problemId": "fewest-rooms-for-overlapping-bookings",
+  "sourceRef": "https://leetcode.com/problems/meeting-rooms-ii/",
+  "title": "Fewest Rooms For Overlapping Bookings",
+  "statement": "Up to 100,000 bookings are given, each with a start time and an end time as integers, in no particular order. A booking occupies a room from its start until its end; a booking that starts exactly when another ends may reuse that room. Report the minimum number of rooms needed so that no two bookings sharing a room overlap. You are not asked which booking goes in which room, only how many rooms are required.",
+  "primaryPattern": "heap",
+  "secondary": [
+    "sorting_preprocess"
+  ],
+  "redundancy": "refinding_extreme_of_changing_set",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "heapq",
+    "heap_topk",
+    "sorting_preprocess"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 start-end pairs in arbitrary order. Output: one integer. The answer equals the maximum number of bookings simultaneously active at any instant, which is the reframing that makes the problem tractable.",
+    "brute": "Process bookings in start order, keeping a list of rooms with their current end times; for each booking, scan the whole list for a room that has freed up, and open a new room if none has. O(n^2) when many rooms are open at once.",
+    "bottleneck": "Every arriving booking rescans the entire list of open rooms looking for the one that freed earliest, even though the list changed by a single entry since the previous booking was placed.",
+    "lift": "Only the earliest-ending open room can ever free up first, so keep the open rooms' end times in a min-heap. Each booking costs one comparison against the root plus a logarithmic update.",
+    "invariant": "After processing the bookings in start order up to the current one, the heap holds exactly the end times of the rooms currently in use, so its size is the number of simultaneously active bookings and its root is the next room to free.",
+    "verify": "No bookings, giving zero; one booking; bookings that all overlap, giving n; bookings that never overlap, giving one; a booking starting exactly when another ends, which must reuse the room; identical bookings; 100,000 bookings. Sorting is n log n and each booking is a logarithmic heap operation."
+  },
+  "hints": [
+    "Restate the goal without the word 'room'. What single quantity about the set of time intervals does the answer equal? Write that sentence before touching the input.",
+    "You have an approach that walks bookings in start order and assigns each one somewhere. Describe what it does when a new booking arrives.",
+    "It scans every currently open room to find one that has already ended. Between two consecutive bookings that list changed by at most one entry, yet it is scanned in full each time.",
+    "Name the waste: re-finding the earliest-ending member of a collection that changes by one element between queries.",
+    "Only the room that frees soonest can matter, so keep the open rooms' end times in a min-heap and compare the arriving booking against the root.",
+    "Sort bookings by start time. Maintain a min-heap of end times. For each booking, if the heap's root is at or before this booking's start, pop it — that room has freed. Then push this booking's end. The answer is the largest size the heap ever reaches. Why is popping a single freed room enough, rather than popping every room that has freed?",
+    "Frame: up to 1e5 start-end pairs in arbitrary order; the answer equals the maximum number of intervals simultaneously active, and getting to that restatement is rung one. Brute: process in start order and scan the open-room list for a free room; O(n^2) when many rooms are open. Bottleneck: each arrival rescans the entire open-room list for the earliest end time, though the list changed by one entry since the last arrival. Lift: a min-heap of end times for the currently open rooms. Invariant: after processing bookings in start order, the heap holds exactly the end times of rooms in use, so its size is the current simultaneity and its root is the next room to free. Per booking: pop the root if it is at or before this start, then push this end; track the maximum heap size. Popping one freed room suffices because we immediately push one booking — popping more would shrink the heap below the true simultaneity count only if we also stopped tracking those rooms, and since we take the maximum size, popping extras would not change the maximum but does no good either. The boundary rule matters: an end time exactly equal to a start time must count as freed, so the comparison is 'at or before', not 'strictly before'. Verify: no bookings gives zero, one booking gives one, all-overlapping gives n, disjoint bookings give one, and touching bookings must reuse a room. Sorting O(n log n), then O(n log n) heap work, O(n) space. The equivalent sweep — sort start times and end times separately and walk both with two indices — reaches the same bound and is worth knowing."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "'Intervals' plus 'sort by start and sweep' is the standard interval reflex, and sorting is genuinely the first step. Sorting alone does not tell you how many rooms are open; something must track the open set as it changes."
+    },
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "Assigning each booking to the room that frees earliest is a local choice with an exchange argument behind it, so the reasoning feels greedy. The greedy policy is correct, and the mechanism question is what structure makes that choice cheap."
+    },
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "Marking plus one at each start and minus one at each end and sweeping is a difference-array solution and it is correct when times are small integers. With times spanning a large range it needs coordinate compression, which is extra machinery the heap avoids."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The interval wording triggers the sort-and-sweep reflex so strongly that most learners stop at 'sorting' and never name what maintains the open set.",
+  "edgeCases": [
+    "no bookings",
+    "a single booking",
+    "all bookings overlapping the same instant",
+    "bookings that never overlap",
+    "a booking starting exactly when another ends",
+    "many identical bookings",
+    "100,000 bookings nested inside one another"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Up to 100,000 time intervals are given in arbitrary order, each with an integer start and end. Intervals that merely touch at an endpoint do not conflict. Report the minimum number of resources needed so that no resource holds two overlapping intervals. Only the count is needed. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "An airport receives 100,000 flight records for one day, each with a landing time and a departure time, listed in no order. A plane occupies a gate from landing until departure, and a plane may take a gate the instant another leaves it. The airport wants the smallest number of gates that could have handled the day without conflict; it does not need the assignment itself. Scanning every occupied gate for each arriving flight is too slow. What mechanism, and what waste does it remove?"
+    }
+  ]
+}

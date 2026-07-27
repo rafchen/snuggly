@@ -1,0 +1,68 @@
+{
+  "problemId": "split-into-parts-minimizing-worst-part",
+  "sourceRef": "https://leetcode.com/problems/split-array-largest-sum/",
+  "title": "Split Into Parts, Minimize The Heaviest Part",
+  "statement": "A sequence of up to 1,000 non-negative integers must be cut into exactly k contiguous parts, where k is between 1 and the sequence length. No part may be empty and the order of the sequence may not be changed. Each part has a weight equal to the total of its entries. Among all valid ways to cut the sequence, report the smallest possible weight of the heaviest part. You are asked only for that number, not for the cut positions.",
+  "primaryPattern": "binary_search_answer",
+  "secondary": [
+    "greedy"
+  ],
+  "redundancy": "retesting_monotone_feasibility",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "binary_search_array",
+    "binary_search_answer"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 1,000 non-negative integers and a part count k. Output: one number, the minimized maximum part weight. The answer lies between the largest single entry and the total of all entries — a numeric range, not an index range.",
+    "brute": "Enumerate every way to place k-1 cut positions among n-1 gaps, compute each arrangement's heaviest part, and keep the smallest. Combinatorial, hopeless past tiny n.",
+    "bottleneck": "It re-tests candidate arrangements that differ trivially from ones already rejected, and it re-adds the same part totals across arrangements that share most of their cuts — the total of positions 10 through 40 is recomputed for every arrangement that happens to contain that part.",
+    "lift": "Ask the yes-or-no question instead: given a cap W, can the sequence be cut into at most k parts each weighing no more than W? A single greedy left-to-right pass answers that. Feasibility is monotone in W, so binary search W over the numeric range.",
+    "invariant": "Throughout the search, hi is always a cap known to be achievable and lo minus one is always a cap known to be impossible, so the smallest achievable cap stays inside the range; within a feasibility check, the greedy pass always uses the fewest parts possible for the prefix consumed so far.",
+    "verify": "k equal to 1, giving the total; k equal to n, giving the largest entry; all entries zero; all entries equal; one huge entry among zeros; n at 1,000. About 40 iterations, each a linear pass, so O(n log(total)) time and O(1) space."
+  },
+  "hints": [
+    "The phrase 'smallest possible weight of the heaviest part' is doing a lot of work. Rewrite it as a question with a yes-or-no answer about a specific candidate number, and say what range that candidate could live in.",
+    "You have an approach that enumerates cut placements. Say what it costs and where in that enumeration the same arithmetic reappears.",
+    "Arrangements that share most of their cuts re-add the same runs of entries, and arrangements only slightly worse than a rejected one get evaluated in full anyway.",
+    "Turn the problem around. Suppose someone hands you a cap W and asks only whether the cuts can be made so that no part exceeds W. How expensive is that single question, and how would you answer it in one pass?",
+    "One left-to-right pass answers it: extend the current part while it fits under the cap, otherwise start a new part. Now note that the yes/no answer is monotone in W, which is exactly the setup for a binary search over the candidate answers.",
+    "Binary search W between the largest single entry and the total of all entries. For each W, sweep left to right accumulating into the current part and cutting whenever adding the next entry would exceed W; feasible if the number of parts used is at most k. Keep the smallest feasible W. Why is the lower bound the largest entry rather than zero?",
+    "Frame: up to 1,000 non-negative entries cut into exactly k contiguous non-empty parts; output is the minimized maximum part weight. The candidate answers form a numeric range from the largest single entry to the total, which is a search space that is not the input. Brute: enumerate cut placements and evaluate each; combinatorial. Bottleneck: arrangements sharing most cuts re-add the same part totals, and near-duplicate arrangements are fully re-evaluated even when a rejected neighbour already implied the outcome. Lift: replace optimization with a decision. Given a cap W, one greedy sweep — extend the current part while it fits, cut otherwise — uses the minimum possible number of parts, so it decides feasibility in O(n). Feasibility is monotone: raising W never turns a yes into a no. Binary search on the answer over the numeric range. Invariant: hi is always feasible and lo minus one always infeasible, so the optimum stays bracketed; inside a check, the greedy pass always uses the fewest parts for the prefix consumed. Verify: k of 1 gives the total, k of n gives the largest entry, all-zero entries give zero, and one huge entry among zeros gives that entry. The lower bound must be the largest entry, not zero, because no cap below it can hold the part containing that entry. About 40 iterations of a linear pass: O(n log total) time, O(1) space. Note 'at most k parts' and 'exactly k parts' agree here, since a feasible split into fewer parts can always be subdivided further without raising the maximum."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Cut a sequence into k contiguous parts optimally' is the canonical interval-partition DP, with a state of position and parts used. It is genuinely correct at O(n squared times k) and it is the answer most people write first."
+    },
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "The greedy sweep really is inside the solution, so it feels like the mechanism. On its own it cannot pick the cap — greedily balancing parts without a target produces the wrong split on uneven data."
+    },
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "Part weights are range totals, and a prefix array answers those in constant time, which makes prefix sums feel like the key move. It only speeds up the evaluation of an arrangement; the number of arrangements is the real problem."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "n is only 1,000, which is the classic signal for a quadratic DP, and 'cut into k parts' reinforces it. The 'minimize the maximum' phrasing is the real signal and it is easy to read past.",
+  "edgeCases": [
+    "k equal to 1",
+    "k equal to the sequence length",
+    "all entries zero",
+    "all entries equal",
+    "one very large entry surrounded by zeros",
+    "1,000 entries with k equal to 2"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Up to 1,000 non-negative numbers must be cut into exactly k contiguous non-empty parts without reordering. A part's weight is the sum of its entries. Report the smallest achievable value of the heaviest part's weight. Only that number is needed. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A relay race has 1,000 checkpoints spaced along a fixed route, with a known distance between consecutive checkpoints. The route must be divided among exactly k runners, and each runner takes one unbroken segment in route order. The team's finishing time is set by whoever runs the longest segment. Report the shortest possible longest segment. Enumerating handovers is hopeless. What mechanism, and what waste does it eliminate?"
+    }
+  ]
+}

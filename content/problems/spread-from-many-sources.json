@@ -1,0 +1,68 @@
+{
+  "problemId": "spread-from-many-sources",
+  "sourceRef": "https://leetcode.com/problems/rotting-oranges/",
+  "title": "How Long Until Everything Is Affected",
+  "statement": "A grid of up to 100 by 100 cells is given. Each cell is empty, holds a healthy item, or holds an affected item. Every minute, every affected item causes each healthy item directly above, below, left or right of it to become affected as well; this happens everywhere simultaneously. Report the number of minutes until no healthy item remains, or negative one if some healthy item can never be reached. If no healthy item exists at the start the answer is zero, even when no affected item exists either.",
+  "primaryPattern": "bfs",
+  "secondary": [],
+  "redundancy": "reexpanding_equal_cost_frontier",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "bfs_levels",
+    "multi_source_bfs"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a grid of up to 100 by 100 cells with three cell states. Output: the number of simultaneous rounds until nothing healthy remains, or negative one. The word 'simultaneously' and the possibility of many initial affected cells are the two structural facts.",
+    "brute": "Simulate minute by minute: sweep the whole grid, mark every healthy neighbour of an affected cell, apply the marks, and repeat until a sweep changes nothing. O(cells) per minute times up to O(cells) minutes, so O(cells squared).",
+    "bottleneck": "Every minute rescans all 10,000 cells including the vast regions that are already fully affected or permanently empty, and cells that became affected long ago are re-examined as potential spreaders in every subsequent sweep even though they have no healthy neighbours left.",
+    "lift": "Only the cells that became affected in the previous minute can spread this minute. Seed a queue with every initially affected cell at time zero and expand layer by layer — a breadth-first search from many sources at once, where the layer index is the minute.",
+    "invariant": "When a cell is first enqueued, its recorded time equals the earliest minute at which it can become affected; the queue is always processed in non-decreasing time order, so all cells of one minute are handled before any cell of the next.",
+    "verify": "A grid with no healthy items, giving zero; a grid with no affected items but some healthy ones, giving negative one; a healthy item walled off by empty cells; a single cell in each of the three states; a fully affected grid; a 100 by 100 grid where one corner is reached last. Each cell is enqueued at most once, so O(cells) time and space."
+  },
+  "hints": [
+    "Two details in the statement change the shape of the answer: spreading happens everywhere at once, and there can be many affected cells at the start. Say what each one implies.",
+    "You have the minute-by-minute simulation. Describe exactly what one simulated minute inspects.",
+    "It inspects all ten thousand cells, including large regions that are entirely empty or entirely affected already, and re-examines long-affected cells as potential spreaders even though nothing healthy remains beside them.",
+    "Name the waste: re-scanning cells whose state can no longer change, and re-expanding from cells that were already fully expanded in an earlier round.",
+    "Only cells that changed in the previous round can cause a change now. Track exactly those in a queue seeded with every initially affected cell, and expand outward one round at a time — a breadth-first search with many starting points.",
+    "Enqueue every initially affected cell with time zero and count the healthy cells. Repeatedly pop a cell and, for each of its four neighbours that is healthy, mark it affected with time one greater, decrement the healthy count, and enqueue it. The answer is the largest time recorded, or negative one if the healthy count is not zero at the end. Why does seeding all sources at once give the correct simultaneous behaviour, rather than needing a separate search per source?",
+    "Frame: a grid of up to 100 by 100 cells with empty, healthy and affected states; output is the number of simultaneous rounds until nothing healthy remains, or negative one. Simultaneous spreading plus multiple initial sources are the structural facts. Brute: simulate each minute by sweeping the entire grid and applying marks; O(cells) per minute over up to O(cells) minutes, so O(cells squared). Bottleneck: each sweep rescans regions that can no longer change and re-expands cells affected long ago, whose neighbours are already all affected or empty. Lift: multi-source breadth-first search. Seed the queue with every initially affected cell at time zero, then expand one layer at a time. Invariant: a cell's time when first enqueued is the earliest minute it can become affected, and the queue is processed in non-decreasing time, so an entire minute's cells are handled before the next minute's. Seeding all sources at once is exactly equivalent to simultaneous spreading, because the layer index measures distance to the nearest source rather than to any particular one — a separate search per source followed by a minimum would give the same answer at many times the cost. Verify: no healthy items gives zero even with no affected items, healthy items with no affected items gives negative one, a healthy item walled off by empty cells gives negative one, single-cell grids in each state, and a fully affected grid gives zero. Track a running count of healthy cells rather than rescanning at the end. Each cell is enqueued at most once: O(cells) time and space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "Grid spreading looks like flood fill, and depth-first search fills regions correctly. Depth-first order does not measure rounds, so a cell reachable from two sources can be assigned the time from the wrong one."
+    },
+    {
+      "mechanism": "dijkstra",
+      "temptingBecause": "'Time until each cell is reached from the nearest source' is a shortest-path phrasing and Dijkstra handles multiple sources naturally. All steps take exactly one minute, so the priority queue adds a log factor and nothing else."
+    },
+    {
+      "mechanism": "union_find",
+      "temptingBecause": "'Which healthy cells are connected to an affected one' sounds like a connectivity grouping question, and the reachability half of the answer really is connectivity. It cannot produce the number of rounds, which is a distance, not a grouping."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "It reads as a simulation problem rather than a shortest-path problem, and the fact that the answer is a distance from the nearest of many sources is never stated in distance language.",
+  "edgeCases": [
+    "no healthy items at the start",
+    "healthy items but no affected items",
+    "a healthy item walled off by empty cells",
+    "a single cell that is empty",
+    "a single cell that is healthy",
+    "a fully affected grid",
+    "a 100 by 100 grid where one corner is reached last"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "A grid of up to 100 by 100 cells holds empty, healthy and affected cells. Each round, every affected cell affects its four side-neighbours that are healthy, all at once. Report the number of rounds until nothing healthy remains, or negative one if that never happens. Sweeping the whole grid each round is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A city block map of 100 by 100 parcels marks each parcel as vacant, timber-built, or already burning. Fire crosses to timber parcels directly north, south, east or west of a burning one, and all such crossings happen together at the end of each hour. Several parcels may be alight at the start. Report how many hours pass before no timber parcel remains unburnt, or state that some parcel never catches. Re-examining the entire map every hour is too slow. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "problemId": "maximum-in-every-window",
+  "sourceRef": "https://leetcode.com/problems/sliding-window-maximum/",
+  "title": "Maximum In Every Window Of Fixed Width",
+  "statement": "An array of up to 100,000 integers is given along with a width k between 1 and the array length. For every contiguous stretch of exactly k entries, report the largest value inside it. The output holds one number per stretch, in left-to-right order, so it has length equal to the array length minus k plus one. Values may be negative and may repeat.",
+  "primaryPattern": "monotonic_deque",
+  "secondary": [
+    "sliding_window_fixed"
+  ],
+  "redundancy": "retracking_order_with_lookup",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "stack_basics",
+    "monotonic_stack",
+    "sliding_window_fixed",
+    "monotonic_deque"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 integers and a fixed width k. Output: the maximum of each of the n-k+1 stretches, in order. n at 1e5 means the per-stretch cost must be amortized constant.",
+    "brute": "For each stretch, scan its k entries for the largest. O(n*k), up to 2.5e9 when k is around half of n.",
+    "bottleneck": "Consecutive stretches share k-1 entries, and the brute force rescans all of them for the maximum every time the window moves, so a middle entry is compared against the running maximum k separate times.",
+    "lift": "A monotonic deque of indices with decreasing values. The front always holds the current maximum; arriving values evict smaller ones from the back, and indices that fall out of the window are dropped from the front.",
+    "invariant": "The deque holds exactly the indices inside the current window that are not dominated — that is, no later index in the window holds a value at least as large — and their values decrease from front to back, so the front is the window's maximum.",
+    "verify": "k equal to 1, giving the input back; k equal to n, giving one number; all values identical; strictly increasing values, where nothing is ever evicted from the back; strictly decreasing values, where the front is evicted every step; 100,000 entries with k at 50,000. Each index enters and leaves once: O(n) time and O(k) space."
+  },
+  "hints": [
+    "Write down the number of stretches and multiply by k. Compare that with 100,000 and decide what you are allowed to spend per stretch on average.",
+    "You have the rescan-each-stretch approach. Say what changes about the window's contents when it advances one position, and what your approach recomputes anyway.",
+    "Exactly one entry leaves and one arrives, yet the maximum is found by comparing all k entries again, so an entry in the middle is compared once for every window containing it.",
+    "There are two intertwined wastes: re-finding the largest value in a collection that barely changed, and losing track of which candidates are still inside the window when you do.",
+    "The structure you need must give the current maximum instantly and also let you discard candidates from both ends — the front when they age out of the window, the back when a larger value arrives. That is a monotonic deque.",
+    "Sweep with a deque holding indices whose values decrease from front to back. Before pushing index i, pop from the back while the back's value is at most the value at i. Then push i, drop the front if it has fallen out of the window, and record the front's value once the window is full. Why can a value that is smaller than a later arrival be discarded permanently rather than remembered?",
+    "Frame: up to 1e5 integers and a fixed width k; output is the maximum of each of the n-k+1 windows, so the per-window cost must be amortized constant. Brute: rescan each window's k entries, O(n*k), up to 2.5e9. Bottleneck: consecutive windows share k-1 entries yet the maximum is re-derived across all of them, so a middle entry participates in k separate comparisons. Lift: a monotonic deque of indices with strictly decreasing values. Invariant: the deque holds exactly the window's non-dominated indices — those with no later in-window index holding a value at least as large — with values decreasing front to back, so the front is always the window's maximum. Two evictions maintain it: from the back, any index whose value is at most the arriving value, because that index can never again be the maximum while the newer, larger, longer-lived value is present; and from the front, any index that has fallen outside the window. Verify: k of 1 returns the input, k of n returns a single number, all-identical values, strictly increasing values where nothing is ever evicted from the back, and strictly decreasing values where the front is evicted every step. Each index is pushed once and popped at most once, so O(n) time and O(k) space. The two-heap alternative also works but needs lazy deletion, which is more machinery for the same bound."
+  ],
+  "distractors": [
+    {
+      "mechanism": "heap",
+      "temptingBecause": "'Largest value in a changing collection' is the priority queue's exact job description, and a heap with lazy deletion does solve this. It costs a log factor and cannot cheaply evict the element that just left the window, which is the whole difficulty."
+    },
+    {
+      "mechanism": "sliding_window_fixed",
+      "temptingBecause": "The window really is fixed width and the sweep really is a window sweep, so the family is right. Maximum is not invertible the way a sum is, so the add-one-remove-one trick that makes fixed windows easy does not apply."
+    },
+    {
+      "mechanism": "segment_tree",
+      "temptingBecause": "Range-maximum queries over a static array answer every window in log time and the code is standard. It is a log factor slower and treats the windows as unrelated, which is exactly the structure being exploited."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "k equal to 1",
+    "k equal to the array length",
+    "all values identical",
+    "strictly increasing values",
+    "strictly decreasing values",
+    "all values negative",
+    "100,000 entries with k at 50,000"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "Given up to 100,000 integers and a fixed width k, output the maximum value of every contiguous stretch of exactly k entries, in left-to-right order. Rescanning each stretch is too slow. Name the mechanism and the specific repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A sensor reports one pressure reading per second for 100,000 seconds. A safety system must display, at every second once enough history exists, the peak pressure over the trailing k seconds, where k is fixed. Readings can be negative and repeat. The display updates every second, so recomputing the peak over the whole trailing window each time is too slow. What mechanism applies, and what wasted work does it eliminate?"
+    }
+  ]
+}

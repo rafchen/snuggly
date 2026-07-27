@@ -1,0 +1,68 @@
+{
+  "problemId": "non-attacking-queens-arrangements",
+  "sourceRef": "https://leetcode.com/problems/n-queens/",
+  "title": "Arrange The Queens Without Conflict",
+  "statement": "On an n by n board with n between 1 and 9, place exactly n queens so that no two share a row, a column, or either diagonal direction. Report every distinct arrangement, describing each by the column chosen in each row. Two arrangements are the same only when every row's column matches. For n equal to 2 or 3 no arrangement exists and the answer is empty.",
+  "primaryPattern": "backtracking",
+  "secondary": [],
+  "redundancy": "reexploring_dead_branches",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking",
+    "pruning"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a single number n between 1 and 9. Output: every valid arrangement, described row by row. n at most 9 with a 'find all arrangements' flavour is the enumeration-with-pruning fingerprint.",
+    "brute": "Choose n squares out of n squared in every possible way and test each choice for conflicts. For n equal to 8 that is over four billion choices, nearly all of which put two queens in one row.",
+    "bottleneck": "It builds complete arrangements before testing them, so it re-explores enormous families of placements that were already doomed by a conflict introduced in the very first two queens — every completion of a dead prefix is generated and tested in full.",
+    "lift": "Place one queen per row, in row order, and test each placement against the queens already placed before descending. A conflict then prunes the entire remaining subtree instead of being discovered at the leaves.",
+    "invariant": "At depth r, the queens placed in rows zero through r-1 are pairwise non-attacking; therefore any completion failure is a property of the remaining rows and not of the prefix, and abandoning the branch discards only invalid arrangements.",
+    "verify": "n equal to 1, giving one arrangement; n equal to 2 and 3, giving none; n equal to 4, giving two; n equal to 8, giving ninety-two; n equal to 9. With occupancy sets for columns and both diagonal directions, each placement test is constant time."
+  },
+  "hints": [
+    "n is at most 9 and the problem asks for every arrangement. Say what that pair of facts implies about the intended running time, and count how many squares a queen could occupy.",
+    "You have an approach that produces candidate arrangements and checks them. Say at what point in each candidate's construction the check happens.",
+    "It checks at the very end. So an arrangement whose first two queens already attack each other still has all of its remaining placements enumerated and tested, and so does every other arrangement sharing that doomed opening.",
+    "Name the waste: continuing to explore branches whose failure was already determined by a decision made near the top of the branch.",
+    "Move the check to the moment of each placement so a failure cuts off everything below it. That is backtracking with pruning: place one queen per row in row order, reject immediately on conflict, and undo the placement when the branch is exhausted.",
+    "Recurse on the row index, carrying sets of occupied columns and of occupied values for each diagonal direction — row plus column for one, row minus column for the other. For each column, skip it if any set already holds its key; otherwise add the three keys, recurse to the next row, then remove them. Record an arrangement when the row index passes the last row. Why does placing exactly one queen per row eliminate an entire class of conflicts without any test at all?",
+    "Frame: n between 1 and 9, output is every non-attacking arrangement described row by row; small n with 'find all arrangements' is the enumeration-with-pruning fingerprint. Brute: choose n of the n squared squares and test each choice; over four billion candidates at n equal to 8, nearly all invalid. Bottleneck: candidates are tested only once complete, so every completion of a prefix that was already doomed by its first two queens is generated and tested in full. Lift: backtracking with pruning. Placing exactly one queen per row, in row order, makes row conflicts structurally impossible with no test at all — that is the reframing that removes one of the three conflict types for free. Then test each placement against occupancy sets for columns and for the two diagonal directions, keyed on row plus column and row minus column respectively, so each test is constant time. Invariant: at depth r the queens in rows zero through r-1 are pairwise non-attacking, so abandoning a branch discards only arrangements that were already invalid, never a valid one. Undo the three set insertions when the branch is exhausted; the undo is exactly what distinguishes this from a plain traversal. Verify: n of 1 gives one arrangement, n of 2 and 3 give none, n of 4 gives two, n of 8 gives ninety-two, and n of 9 gives three hundred and fifty-two. Space is O(n) beyond the output."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "The search is a depth-first walk of a decision tree, so the family is right and the code looks the same. The distinguishing feature is that state is undone on the way out of each branch because candidate solutions are being built, not nodes visited."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "Small n with a combinatorial flavour is the bitmask-DP fingerprint, and a bitmask over occupied columns really does appear in fast implementations. Every arrangement must be emitted individually, so there is nothing to collapse into a memo."
+    },
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "Placing each queen in the first column that currently looks safe is a local rule and it feels constructive. No exchange argument supports it — an early safe-looking choice frequently makes the last rows impossible, which is exactly why the undo step exists."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "n equal to 1",
+    "n equal to 2, which has no arrangement",
+    "n equal to 3, which has no arrangement",
+    "n equal to 4, which has exactly two",
+    "n equal to 8, which has ninety-two",
+    "n equal to 9, the largest allowed"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "On an n by n board with n at most 9, place n pieces so that no two share a row, a column, or a diagonal in either direction, and report every distinct placement. Building complete placements and then checking them is far too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A telescope array has n observation slots arranged in an n by n schedule grid, n at most 9. Exactly n instruments must be assigned, one per time slot and one per frequency band, and no two instruments may sit on either diagonal of the grid because of interference. List every valid assignment. Generating complete assignments and then testing them is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

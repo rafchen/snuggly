@@ -1,0 +1,69 @@
+{
+  "problemId": "longest-run-without-repeats",
+  "sourceRef": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
+  "title": "Longest Stretch With No Character Twice",
+  "statement": "A string of up to 100,000 characters is given, drawn from a mixed alphabet of letters, digits, symbols and spaces. Find the length of the longest contiguous stretch in which no character appears more than once. The stretch must be contiguous — you may not skip over characters. Report only the length, not the stretch itself. An empty input has answer zero.",
+  "primaryPattern": "sliding_window_variable",
+  "secondary": [
+    "hashing"
+  ],
+  "redundancy": "resumming_overlapping_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "sliding_window_fixed",
+    "hashing",
+    "sliding_window_variable"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: string up to 100,000 characters over a mixed alphabet. Output: one integer length. n at 1e5 means the intended cost is a single pass, so each character may be touched a bounded number of times.",
+    "brute": "For every start position, extend rightward while tracking which characters have been used, stopping at the first repeat. O(n^2) time, and O(n^2) if the character-set is rebuilt per start.",
+    "bottleneck": "When the stretch starting at position i is abandoned at a repeat, the algorithm restarts from i+1 and re-reads every character between i+1 and the failure point, re-establishing membership facts it had already established one step earlier.",
+    "lift": "A variable-width sliding window: advance the right edge one character at a time, and when a duplicate arrives, advance the left edge just far enough to expel the earlier copy. A hash map from character to its last position makes that jump direct.",
+    "invariant": "At every moment the characters strictly inside the window are pairwise distinct, and the window is the longest such stretch ending at the current right edge.",
+    "verify": "Empty string; one character; all characters identical, giving 1; all characters distinct, giving n; a repeat that sits far behind the current left edge and must not drag the left edge backwards; n at 100,000. Each edge only moves right, so O(n) time and O(alphabet) space."
+  },
+  "hints": [
+    "The string reaches 100,000 characters. State the running time you are allowed and then count how many contiguous stretches exist — the gap between those two numbers is the whole problem.",
+    "You have the restart-from-every-position approach. Describe precisely what happens the moment it hits a duplicate, and what it does next.",
+    "It abandons the stretch and begins again one position to the right, re-reading almost all of the characters it just finished reading and re-learning that they are distinct.",
+    "The waste is re-establishing the same distinctness facts over a range that overlaps the previous range almost entirely, once per starting position.",
+    "This is the variable-width sliding window. The right edge always advances; the question is only how far the left edge should jump when a repeat arrives.",
+    "Advance the right edge one character at a time, keeping a map from character to the last position it was seen. When the arriving character was last seen at position p and p is at or after the current left edge, move the left edge to p+1. Record the width after each step. Why must the left edge never move backwards, and what breaks if you let it?",
+    "Frame: a string up to 1e5 characters over a mixed alphabet, output is the longest contiguous all-distinct length; 1e5 permits one pass with bounded touches per character. Brute: restart at every position and extend until a repeat, O(n^2). Bottleneck: on failure it restarts one position later and re-reads the entire overlapping prefix, re-deriving distinctness it already knew. Lift: a variable-width sliding window with a hash map from character to last seen position. The right edge advances one step at a time; when the arriving character's last position lies at or after the left edge, the left edge jumps to just past it. Invariant: the characters inside the window are always pairwise distinct, and the window is the longest all-distinct stretch ending at the current right edge — which is what makes taking the running maximum of widths correct. The left edge must be moved with a max against its current value, never assigned unconditionally, or a stale entry from far behind will drag it backwards and admit a duplicate. Verify: empty gives 0, one character gives 1, all-identical gives 1, all-distinct gives n, and a stale repeat behind the left edge must be ignored. Both edges only move right, so O(n) time and O(alphabet) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sliding_window_fixed",
+      "temptingBecause": "It is the same family and the same code skeleton, so it is easy to reach for by reflex. The discriminator is that no width is given here — the width is the thing being maximized, so it cannot be pinned in advance."
+    },
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Two indices walking over one array is the shared visual, and 'two pointers' gets used loosely for both. Converging from the ends is meaningless here because the data is not sorted and the answer is a contiguous interior stretch."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Longest something ending at position i' is a textbook one-dimensional DP framing and it can genuinely be written that way. It hides the fact that the state transition is just the window's left edge under another name."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "empty string",
+    "single character",
+    "all characters identical",
+    "all characters distinct",
+    "a duplicate whose earlier copy lies behind the current left edge",
+    "100,000 characters alternating between two symbols"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given a string of up to 100,000 characters over a mixed alphabet, report the length of the longest contiguous stretch containing no repeated character. Skipping characters is not allowed. Restarting the scan at every position is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A network switch logs 100,000 packet arrivals, each stamped with a source address. A burst is called clean if no source sent twice during it. Bursts are contiguous spans of the log — you cannot drop a packet out of the middle. Report the length of the longest clean burst. The operator needs this in a single pass over the log because the log does not fit twice in memory. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

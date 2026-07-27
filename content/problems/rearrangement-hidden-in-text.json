@@ -1,0 +1,69 @@
+{
+  "problemId": "rearrangement-hidden-in-text",
+  "sourceRef": "https://leetcode.com/problems/permutation-in-string/",
+  "title": "Is A Rearrangement Hiding In The Text",
+  "statement": "Two lowercase strings are given: a short pattern of up to 10,000 characters and a text of up to 100,000 characters. Decide whether the text contains, at some contiguous position, a stretch that uses exactly the same letters as the pattern with exactly the same multiplicities — in other words, a rearrangement of the pattern sitting somewhere inside the text. The order of the letters inside that stretch does not matter. If the pattern is longer than the text the answer is no.",
+  "primaryPattern": "sliding_window_fixed",
+  "secondary": [
+    "hashing"
+  ],
+  "redundancy": "resumming_overlapping_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "sliding_window_fixed",
+    "hashing",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: pattern of length m up to 1e4 and text of length n up to 1e5, lowercase only. Output: a boolean. Any candidate stretch has length exactly m, so there are n-m+1 candidates and per-candidate cost must be small.",
+    "brute": "For each of the n-m+1 starting positions, tally the letters of the m-character stretch and compare that tally against the pattern's tally. O(n*m + 26n), roughly 1e9.",
+    "bottleneck": "Adjacent candidate stretches differ in exactly two characters, yet the brute force rebuilds the entire 26-letter tally from scratch for each of them, re-counting the m-2 characters that both stretches share.",
+    "lift": "A fixed-width sliding window over the text carrying a 26-slot count: on each step decrement the count of the departing character and increment the count of the arriving one, then compare against the pattern's counts.",
+    "invariant": "After the step that lands the window on start position i, the 26-slot array holds exactly the letter counts of text positions i through i+m-1 — one decrement and one increment per step keeps it exact.",
+    "verify": "Pattern longer than text; pattern equal to the text; single-character pattern; text of one repeated letter; a near-miss where counts match on 25 letters and differ on one. O(n + m) time with a constant-size alphabet, O(1) space. Maintaining a running count of how many of the 26 letters currently match avoids a 26-way comparison per step."
+  },
+  "hints": [
+    "The pattern has a fixed length m, so every candidate answer inside the text has that exact same length. How many candidates are there, and what does the text length of 100,000 allow you to spend on each?",
+    "Your working approach evaluates each candidate independently. Describe what evaluating one candidate costs, and then ask what the next candidate has in common with it.",
+    "The stretch starting at position i and the stretch starting at position i+1 overlap in m-1 characters. You recount every one of those shared characters when you move over by one.",
+    "The repeated operation is rebuilding a letter tally over a range that overlaps the previous range almost entirely, once per starting position.",
+    "Because every candidate has the same width, this is the fixed sliding window: carry the tally and repair it by two operations per step rather than rebuilding it.",
+    "Keep a 26-slot count for the pattern and a 26-slot count for the current window of width m. Each step, decrement the count for the character leaving and increment the one entering, then check equality. To avoid a 26-way check per step, maintain a counter of how many letters currently agree and update it only for the two letters that changed. Which two letters can possibly change a slot's agreement status on a given step?",
+    "Frame: pattern of length m up to 1e4 inside a text of length n up to 1e5, lowercase alphabet, output is a boolean. Every candidate stretch has width exactly m, so there are n-m+1 of them. Brute: tally each candidate independently and compare against the pattern's tally, O(n*m). Bottleneck: adjacent candidates share m-1 characters and the tally is rebuilt from scratch for each, so a middle character is counted m times. Lift: a fixed-width sliding window carrying a 26-slot count, repaired by one decrement and one increment per step. Invariant: after the step landing on start i, the count array holds exactly the letters of positions i..i+m-1. Verify: pattern longer than text gives false immediately, pattern equal to the text, single-character pattern, a text of one repeated letter, and a near-miss differing in one letter's multiplicity. Comparing 26 slots per step is already O(26n), but maintaining a running tally of agreeing letters — updated only for the two letters that changed — brings the per-step cost to O(1). Total O(n + m) time and O(1) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "Substring-search problems with a letter-count condition are usually the growing-and-shrinking kind, and the code shapes are nearly identical. The discriminator is that here the target width is pinned by the pattern's length, so the window never needs to change size."
+    },
+    {
+      "mechanism": "trie",
+      "temptingBecause": "Pattern-inside-text is string-matching vocabulary, and prefix structures are the standard tool for matching many patterns at once. Rearrangements share no prefix with the pattern, so the structure indexes exactly the wrong thing."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "'Some rearrangement of the pattern' reads as an instruction to enumerate permutations and search for each, which is combinatorial enumeration's home. It is also factorial in m and completely unnecessary once you notice only letter counts matter."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The word 'rearrangement' invites permutation enumeration, and the substring framing invites a variable-width window; the fixed width is implied only by the pattern's length rather than stated.",
+  "edgeCases": [
+    "pattern longer than the text",
+    "pattern identical to the text",
+    "single-character pattern",
+    "text consisting of one repeated letter",
+    "a near-miss where one letter's multiplicity is off by one",
+    "pattern of 10,000 characters inside a text of 100,000"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given a lowercase pattern of length up to 10,000 and a lowercase text of length up to 100,000, decide whether some contiguous stretch of the text uses exactly the pattern's letters with exactly the pattern's multiplicities. Letter order inside the stretch is irrelevant. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A factory conveyor carries 100,000 coloured parts in a fixed sequence. An assembly kit calls for a specific multiset of up to 10,000 coloured parts — say four red, two blue, one green — and the robot can only grab a contiguous run off the belt, in whatever order the run happens to be. Determine whether any contiguous run on the belt supplies exactly the kit's multiset. Re-counting each candidate run is far too slow. What mechanism applies, and what work does it save?"
+    }
+  ]
+}

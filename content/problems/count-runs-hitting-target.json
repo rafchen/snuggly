@@ -1,0 +1,64 @@
+{
+  "problemId": "count-runs-hitting-target",
+  "sourceRef": "https://leetcode.com/problems/subarray-sum-equals-k/",
+  "title": "Count The Runs That Hit The Target",
+  "statement": "An array of up to 100,000 integers is given, along with a target total. The integers may be negative, zero, or positive. Count how many contiguous runs of the array — identified by their start and end positions — add up to exactly the target. Two runs holding the same values at different positions count separately, and a run must contain at least one element. The count itself can exceed the array length.",
+  "primaryPattern": "hashing",
+  "secondary": [
+    "prefix_sums"
+  ],
+  "redundancy": "reseeking_membership",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "hashing",
+    "prefix_sums"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 integers of any sign, plus a target. Output: a count of contiguous runs. n at 1e5 rules out the n^2 pair enumeration.",
+    "brute": "For every start position, extend the end position rightward and keep a running total, incrementing the count each time the total equals the target. O(n^2) time, O(1) space.",
+    "bottleneck": "Every start position re-adds the same tail of the array that the previous start position already added; the total of positions 5 through 900 gets rebuilt separately for start 4, start 5, and every start before it.",
+    "lift": "Let P(i) be the total of the first i entries. A run ending at i hits the target exactly when some earlier P(j) equals P(i) minus the target, so the question becomes 'how many earlier prefixes carried that exact value' — a counting hash map answers it in constant time.",
+    "invariant": "When position i is processed, the map holds, for every prefix length j from 0 to i-1, the number of times P(j) occurred; the count contributed at i is exactly the number of valid start positions ending a run at i.",
+    "verify": "Single element equal to the target; single element not equal; all zeros with target zero, which produces n(n+1)/2 runs; a target of zero with values that cancel; n at 100,000. One pass, O(n) time and space."
+  },
+  "hints": [
+    "Two details in the constraints matter more than they look: the array can hold 100,000 entries, and the values may be negative. Say what each of those independently forbids.",
+    "You have a correct quadratic approach. Look at the inner loop and describe the arithmetic it performs, not the comparison.",
+    "Fix a start of 4 and extend to the end; now fix a start of 5 and extend to the end. The second pass re-adds almost exactly the same numbers the first pass already added.",
+    "State it plainly: you are recomputing running totals that you already computed, and separately you are re-searching all earlier positions asking whether any of them starts a run of the right size.",
+    "Carry one running total as you sweep, and keep a hash map from running-total value to how many times that value has occurred so far. That second question becomes a lookup.",
+    "Sweep once, maintaining total. At each position, add to the answer the recorded count of total minus target, then record the current total. Seed the map with a single occurrence of zero before you start. Why does that seed matter, and what would break without it?",
+    "Frame: up to 1e5 integers of arbitrary sign plus a target, output is a count of contiguous runs, and 1e5 kills the quadratic enumeration. Brute: for each start, extend right with a running total; O(n^2). Bottleneck: each start rebuilds the same suffix sums the previous start already built, and each end position re-searches all earlier starts. Lift: define P(i) as the total of the first i entries; a run ending at i hits the target exactly when P(j) equals P(i) minus target for some j less than i, so the repeated question becomes a membership-and-count query answered by a hash map. Invariant: before handling position i the map holds the occurrence count of every P(j) for j from 0 to i-1, so the increment at i counts precisely the valid starts. Seed the map with zero occurring once, otherwise runs beginning at index 0 are never counted. Verify: a single element equal to and not equal to the target, all zeros with target zero producing n(n+1)/2 runs, and cancelling negatives. Time and space are both O(n)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sliding_window_variable",
+      "temptingBecause": "'Contiguous run summing to a target' is the exact phrasing that summons a growing-and-shrinking window, and the window solution is correct when every value is positive — the negatives are the only thing breaking it, and they are easy to skim past."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Count how many ways' is a dynamic-programming fingerprint, and a state like 'number of runs ending here with total t' can be written down, which makes the DP framing feel like it must be the intended one."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The phrase 'contiguous run' is the sliding-window signal, but the values may be negative, which destroys the monotonicity a window relies on. Nothing else in the wording flags this.",
+  "edgeCases": [
+    "single element equal to the target",
+    "single element not equal to the target",
+    "all zeros with target zero, producing n(n+1)/2 runs",
+    "target zero with values that cancel out",
+    "all values negative",
+    "n at 100,000 with no run hitting the target"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "You are given up to 100,000 integers, which may be negative, and a target total. Count the contiguous stretches whose values sum to exactly that target; stretches at different positions count separately even if identical in content. Quadratic time is too slow. Name the mechanism and, more importantly, name the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A bank account's daily balance change is recorded for 100,000 days; deposits are positive, withdrawals negative. An auditor wants to know how many distinct date ranges show a net change of exactly D dollars. Ranges are distinguished by their start and end dates, so two different weeks with the same net change are two answers. Checking every date range one at a time is far too slow. What mechanism applies, and what waste does it kill?"
+    }
+  ]
+}

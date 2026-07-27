@@ -1,0 +1,72 @@
+{
+  "problemId": "recover-an-unknown-letter-order",
+  "sourceRef": "https://leetcode.com/problems/alien-dictionary/",
+  "title": "Recover An Unknown Letter Order",
+  "statement": "A list of up to 100 lowercase words is given, sorted according to some unknown ordering of the letters rather than the familiar one. Sorted here means the usual rule applied with that unknown ordering: comparing two adjacent words, the first position where they differ decides, and if no position differs the shorter word must come first. Recover an ordering of the letters that is consistent with the list, or report that the list is impossible. If several orderings are consistent, any one may be reported.",
+  "primaryPattern": "topological_sort",
+  "secondary": [
+    "dfs"
+  ],
+  "redundancy": "reprocessing_dependencies",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "union_find",
+    "tree_basics",
+    "dfs_traversal",
+    "topological_sort",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100 words already sorted under an unknown letter ordering. Output: a consistent letter ordering, or a failure report. The words are not the problem — the ordering constraints hidden between adjacent words are.",
+    "brute": "Generate candidate orderings of the letters that appear and test each one by re-sorting the word list under it and comparing against the input. Factorial in the number of distinct letters.",
+    "bottleneck": "It re-tests candidate orderings that differ only in letters whose relative order was already decided by the same pair of adjacent words, so the same constraint is re-verified across an enormous family of candidates, and each test re-compares every word pair from scratch.",
+    "lift": "Extract the constraints once. Each adjacent pair of words yields exactly one constraint — the first position where they differ says one letter precedes another — and then build any ordering satisfying all constraints by repeatedly releasing letters with no outstanding constraint, which is a topological ordering.",
+    "invariant": "A letter's outstanding count always equals the number of extracted constraints naming it as the later letter that have not yet been discharged, so a letter is released exactly when every letter that must precede it has already been released.",
+    "verify": "A single word, where every letter is unconstrained; two identical words; a longer word placed before its own prefix, which is impossible and must be reported as such; letters appearing in only one word; a list forcing a cycle; 100 words. Extraction is proportional to the total word length and the ordering is O(letters plus constraints)."
+  },
+  "hints": [
+    "The words are sorted, but not by the ordering you know. Say precisely what information a single pair of adjacent words gives you, and how much of it there is.",
+    "You have an approach that guesses an ordering and validates it. Describe what the validation does, and what two nearly identical guesses have in common.",
+    "Both guesses satisfy or violate exactly the same constraints from the same pair of adjacent words, yet each guess re-derives those constraints by re-comparing the words from scratch.",
+    "Name the waste: re-deriving and re-checking the same precedence relationships across a huge family of candidates, when those relationships could be extracted once and then obeyed rather than tested.",
+    "Extract each constraint once from each adjacent word pair, then construct an ordering that satisfies all of them by repeatedly releasing letters that have no outstanding constraint. This is a topological ordering of the letters.",
+    "For each adjacent pair, scan to the first differing position and record that the earlier word's letter precedes the later word's; if no position differs and the first word is longer, report impossible immediately. Then count outstanding constraints per letter, release letters at zero, and decrement their dependents. If not every letter is released, report impossible. Why is the longer-word-before-its-prefix case impossible rather than merely unconstrained?",
+    "Frame: up to 100 words sorted under an unknown letter ordering; output is a consistent ordering or a failure report. The words themselves carry no information beyond the constraints between adjacent pairs. Brute: enumerate candidate orderings and validate by re-sorting; factorial in the number of distinct letters. Bottleneck: candidates that differ only in already-decided letters are validated separately, and every validation re-derives the same constraints by re-comparing the same word pairs. Lift: extract the constraint set once, then build a topological ordering. Each adjacent pair contributes at most one constraint, taken from the first differing position; beyond that position the pair says nothing, which is the most common extraction error. Invariant: a letter's outstanding count equals the number of undischarged constraints naming it as the later letter, so it is released exactly when everything that must precede it has been released. A letter never released means a circular constraint, so report impossible. The prefix case is a genuine impossibility rather than a missing constraint: if the earlier word has the later word as a strict prefix, no letter ordering can make it sort first, since the sorting rule puts the shorter word first regardless of the alphabet. Verify: a single word leaves every letter unconstrained and any order is acceptable, two identical words yield no constraint, a longer word before its own prefix is impossible, letters appearing in only one word must still be emitted, and a cyclic list must fail. Extraction is proportional to total word length; the ordering costs O(letters plus constraints)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sorting_preprocess",
+      "temptingBecause": "The input is described as sorted and the output is an ordering, so a comparison-based sort feels like the obvious tool. There is no comparison function available — recovering it is the entire problem."
+    },
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "A post-order traversal of the constraint graph produces a valid ordering and detects cycles, so this is a genuinely correct alternative. It requires reversing the post-order at the end, which is the detail that most often goes wrong."
+    },
+    {
+      "mechanism": "trie",
+      "temptingBecause": "A sorted list of words with shared prefixes is prefix-tree territory, and the tree does group the words the constraints come from. The constraints come from adjacent pairs at their first difference, which a prefix structure organizes but does not resolve."
+    }
+  ],
+  "disguiseLevel": 3,
+  "misleadingFingerprint": "It presents as a string and sorting problem — the words are described as sorted and the answer is called an ordering — while the actual content is a directed constraint graph that never appears in the wording.",
+  "edgeCases": [
+    "a single word",
+    "two identical words",
+    "a longer word placed immediately before its own prefix",
+    "letters appearing in only one word",
+    "constraints forming a cycle",
+    "words that share no letters",
+    "100 words with all 26 letters"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Up to 100 lowercase words are given, sorted under an unknown ordering of the letters, using the usual rule that the first differing position decides and a prefix sorts before a longer word. Recover any letter ordering consistent with the list, or report that none exists. Guessing orderings and validating them is hopeless. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "An archaeologist finds 100 inscribed labels filed in the original civilization's own alphabetical order, but the alphabet itself is lost. Filing followed the familiar rule: compare symbol by symbol, the first difference decides, and a shorter label files before a longer one that begins with it. Reconstruct a symbol order consistent with the filing, or show that the filing is inconsistent. Trying candidate alphabets is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

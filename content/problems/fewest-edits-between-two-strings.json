@@ -1,0 +1,72 @@
+{
+  "problemId": "fewest-edits-between-two-strings",
+  "sourceRef": "https://leetcode.com/problems/edit-distance/",
+  "title": "Fewest Edits Between Two Strings",
+  "statement": "Two lowercase strings are given, each up to 500 characters. Report the fewest single-character operations that turn the first into the second, where each operation is one of three: insert a character anywhere, delete a character anywhere, or replace one character with another. Each operation counts as one regardless of which character or position is involved. Either string may be empty.",
+  "primaryPattern": "dynamic_programming",
+  "secondary": [],
+  "redundancy": "recomputing_subproblems",
+  "phase": 4,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking",
+    "memoization",
+    "dp_2d_grid",
+    "dp_edit_distance",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: two strings of length up to 500 each. Output: the minimum operation count. The product of the lengths is 250,000, which is exactly the size of the state space, so a solution proportional to that product is the target.",
+    "brute": "Recurse on the two remaining suffixes. If the leading characters match, consume both at no cost; otherwise take one plus the best of three moves — consume one from the first string, consume one from the second, or consume one from each. Three branches per step gives roughly three-to-the-n calls.",
+    "bottleneck": "The remaining work depends only on how much of each string is left, yet the recursion recomputes the answer for a given pair of remainders once for every distinct sequence of earlier operations that produces it — and the number of such sequences grows exponentially.",
+    "lift": "Cache on the pair of remaining lengths. There are only 501 by 501 such pairs, so memoizing collapses the exponential tree to a quarter of a million computations, each constant time.",
+    "invariant": "The stored value at a pair of positions is always the minimum number of operations to turn the remainder of the first string from that position into the remainder of the second string from its position.",
+    "verify": "Both strings empty, giving zero; one empty, giving the other's length; identical strings, giving zero; strings sharing no character, giving the longer length; a one-character difference; 500 by 500 characters. Time and space proportional to the product of the lengths, with space collapsing to one row."
+  },
+  "hints": [
+    "Both strings are at most 500 characters. Multiply those lengths and hold the result in mind — it is the size of something important that has not been named yet.",
+    "You have the three-branch recursion. Say exactly what the recursion needs to know at any call in order to finish the job.",
+    "It needs only how much of each string remains. Two different sequences of earlier operations that leave the same two remainders face identical remaining work, and your recursion does that work twice.",
+    "Name the waste: recomputing the answer for a pair of remainders that has already been solved, where the pair alone fully determines everything still to do.",
+    "Store the answer for each pair of remainders the first time it is computed and read it thereafter. Memoizing the brute force is the whole lift; the table shape follows from the state, not the other way round.",
+    "Add a cache indexed by the two positions, or fill a table where the entry for the first i and first j characters is zero-cost-diagonal when the characters match, and otherwise one plus the smallest of the entry above, the entry to the left, and the entry diagonally up-left. Seed the first row and column with the counts of pure insertions and deletions. What operation does each of those three neighbours correspond to?",
+    "Frame: two strings of length up to 500; output is the minimum number of insert, delete and replace operations. The product of the lengths, 250,000, is the size of the state space. Brute: recurse on the two remaining suffixes, consuming both leading characters free on a match, otherwise taking one plus the best of consuming from the first, from the second, or from both; three branches per step, roughly three-to-the-n calls. Bottleneck: the remaining work is determined entirely by the pair of remainders, yet the recursion re-derives it once per distinct operation sequence reaching that pair. Lift: memoize on the pair, which bounds the work at 501 by 501 constant-time computations. Invariant: the entry for a pair of positions is the minimum operations to turn one remainder into the other. In table form, the entry for the first i and first j characters equals the diagonal entry when the characters match, and otherwise one plus the smallest of the entry above, which is a deletion from the first string, the entry to the left, which is an insertion into it, and the diagonal entry, which is a replacement. The first row and column are seeded with j and i respectively, being the cost of pure insertions or deletions against an empty remainder. Verify: two empty strings give zero, one empty gives the other's length, identical strings give zero, disjoint alphabets give the longer length, and a single differing character gives one. Time and space O(m times n), with space collapsing to a single row plus one saved diagonal value."
+  ],
+  "distractors": [
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Two strings walked with an index into each is the merge-and-compare shape, and the recursion does advance indices. Converging pointers cannot express a choice among three moves whose costs are only known after the rest is solved."
+    },
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "Aligning matching characters as soon as they appear and editing the rest seems locally sensible and is easy to write. No exchange argument holds: taking an early match can force more edits later than skipping it would."
+    },
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "Each operation costs one, so this is genuinely a shortest path over string states, and layer expansion gives the right answer. The state space of arbitrary strings is astronomically larger than the 250,000 pairs the structure actually needs."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "both strings empty",
+    "one string empty",
+    "identical strings",
+    "strings sharing no characters",
+    "strings differing in one character",
+    "one string a strict prefix of the other",
+    "both strings at 500 characters"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Given two lowercase strings of up to 500 characters each, report the fewest single-character insertions, deletions and replacements that turn the first into the second. Every operation costs one. Recursing over operation sequences is exponential. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A spell checker compares a typed word of up to 500 characters against a dictionary entry of the same maximum length. It scores how far apart they are by the smallest number of single-letter corrections needed — adding a letter, removing one, or swapping one for another — each correction counting equally. Compute that score. Exploring correction sequences one at a time is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

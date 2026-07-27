@@ -1,0 +1,61 @@
+{
+  "problemId": "best-k-length-average",
+  "sourceRef": "https://leetcode.com/problems/maximum-average-subarray-i/",
+  "title": "Best Average Over A Fixed Stretch",
+  "statement": "An array of up to 100,000 integers is given along with a stretch length k, where k is at least 1 and at most the array length. Considering every contiguous stretch of exactly k entries, report the largest average any of them achieves. Values may be negative. The answer is a real number and should be accurate to within one part in one hundred thousand.",
+  "primaryPattern": "sliding_window_fixed",
+  "secondary": [],
+  "redundancy": "resumming_overlapping_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "sliding_window_fixed"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100,000 integers plus a fixed length k. Output: the maximum average over all length-k contiguous stretches. There are n-k+1 stretches and n is 1e5, so the per-stretch cost must be constant.",
+    "brute": "For each of the n-k+1 starting positions, add up the k entries and track the best total. O(n*k), which reaches 1e10 when k is around half of n.",
+    "bottleneck": "Consecutive stretches share k-1 of their k entries, and the brute force re-adds every one of those shared entries for the next stretch — the entry at position 500 is added into k different totals.",
+    "lift": "Compute the first stretch's total once, then slide: subtract the entry leaving the left edge and add the entry arriving at the right edge. Each entry is added once and subtracted once.",
+    "invariant": "Before evaluating the stretch starting at position i, the running total equals exactly the sum of positions i through i+k-1, because every prior step removed exactly one departing entry and added exactly one arriving entry.",
+    "verify": "k equal to 1; k equal to n, giving one stretch; all values identical; all values negative, where the answer is negative; n at 100,000 with k at 50,000. Time O(n), space O(1). Divide by k only at the end to avoid accumulating floating-point error."
+  },
+  "hints": [
+    "Write down how many stretches of length k exist, and multiply that by the cost of evaluating one of them under your current plan. Compare the product against 100,000.",
+    "You have the direct approach. Write out the entries in the stretch starting at position 0 and the entries in the stretch starting at position 1, side by side.",
+    "Those two lists differ in exactly two places: one entry falls off the front and one joins the back. Everything else is identical, and you are adding all of it up a second time.",
+    "The repeated work is re-summing an overlapping range: k-1 of the k additions you perform for each stretch were already performed for the previous one.",
+    "This is the fixed sliding window. Maintain the total instead of recomputing it, and update it by the difference between the two stretches.",
+    "Total the first k entries. Then for each subsequent position, subtract the entry that just left the window and add the entry that just entered, comparing the running total against the best seen. Track totals as integers and divide by k only once at the end — why does that matter for the accuracy requirement?",
+    "Frame: up to 1e5 integers and a fixed length k, output is the best average over the n-k+1 contiguous stretches; with n at 1e5 the per-stretch cost must be O(1). Brute: sum each stretch independently, O(n*k), which hits 1e10 for k near n/2. Bottleneck: adjacent stretches overlap in k-1 entries and every one of those entries is re-added for the next stretch, so a middle entry is summed k separate times. Lift: the fixed sliding window — compute the first total once, then per step subtract the departing entry and add the arriving one. Invariant: before evaluating the stretch at i the running total is exactly the sum of positions i..i+k-1, since each step performed exactly one removal and one addition. Verify: k equal to 1, k equal to n, all-identical values, all-negative values where the answer stays negative, and n at 1e5 with k at 5e4. Keep the running total in integer arithmetic and divide by k only when reporting, so rounding error is introduced once rather than n times. Time O(n), space O(1)."
+  ],
+  "distractors": [
+    {
+      "mechanism": "prefix_sums",
+      "temptingBecause": "A prefix-sum array answers every stretch total in constant time and gives the correct answer at the same complexity, so it feels equally right. It is heavier than needed here — the window never changes size, so no random-access range query is required."
+    },
+    {
+      "mechanism": "heap",
+      "temptingBecause": "'Report the largest' is top-k vocabulary, and a priority queue over stretch totals would find the maximum. That solves the wrong bottleneck: the cost is in building the totals, not in finding the largest among them."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "k equal to 1",
+    "k equal to the array length",
+    "all values identical",
+    "all values negative",
+    "array length 1 with k equal to 1",
+    "n at 100,000 with k at 50,000"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "Given up to 100,000 integers and a fixed length k, find the largest average achieved by any contiguous stretch of exactly k of them. Values may be negative and there are nearly n such stretches. Name the mechanism and the specific repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A weather station logs one temperature reading per hour for 100,000 hours; readings can be below zero. A climatologist wants the warmest k-hour period on record, measured by mean temperature, where k is fixed in advance and can be anything from one hour to the whole log. Report that mean. Recomputing each candidate period from scratch is far too slow. Which mechanism, and what work does it remove?"
+    }
+  ]
+}

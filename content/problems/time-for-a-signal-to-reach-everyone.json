@@ -1,0 +1,74 @@
+{
+  "problemId": "time-for-a-signal-to-reach-everyone",
+  "sourceRef": "https://leetcode.com/problems/network-delay-time/",
+  "title": "Time For A Signal To Reach Everyone",
+  "statement": "A network has up to 100 stations numbered from one, connected by up to 6,000 one-way links; each link has a positive travel time. A signal starts at one named station and travels along links, arriving at a station at the earliest time any route can deliver it. Report the time at which the last station receives the signal, or negative one if some station never does. Travel times differ across links and there may be several links between the same pair of stations in the same direction.",
+  "primaryPattern": "dijkstra",
+  "secondary": [
+    "heap"
+  ],
+  "redundancy": "reexpanding_equal_cost_frontier",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "heapq",
+    "heap_topk",
+    "tree_basics",
+    "dfs_traversal",
+    "union_find",
+    "topological_sort",
+    "dijkstra"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: up to 100 stations and up to 6,000 one-way links with positive travel times, plus a source. Output: the maximum over stations of the earliest arrival time, or negative one. Link times differ, which is the fact that rules out uniform-cost expansion.",
+    "brute": "Explore every route from the source recursively, recording the arrival time of each and keeping the smallest per station. The number of routes is exponential, because a station is reached by exponentially many routes.",
+    "bottleneck": "The same station is expanded once for every route that reaches it, and each expansion re-explores the identical region beyond it — a station in the middle of the network is re-entered from every route prefix, even when the prefix is already slower than one seen before.",
+    "lift": "With positive link times, once the station with the smallest tentative arrival time is taken, that arrival time is final and it never needs re-expanding. Repeatedly take the unfinalized station with the smallest tentative time from a priority queue and relax its outgoing links.",
+    "invariant": "Every finalized station's recorded time is the true earliest arrival; a station is finalized only when its tentative time is the smallest among all unfinalized stations, and since all link times are positive, no later route can improve it.",
+    "verify": "One station, giving zero; a station unreachable from the source, giving negative one; two links between the same pair where only the faster one matters; a link from a station to itself; all links of equal time, where the answer coincides with a hop count; 100 stations with 6,000 links. Cost is O(links times log stations)."
+  },
+  "hints": [
+    "Two properties of the links decide everything: their direction and their times. Say what is true of the times, and what would change if any of them could be zero or negative.",
+    "You have a recursive route explorer. Pick a station in the middle and count how many times your explorer arrives at it.",
+    "It arrives once for every route prefix that reaches it, and each arrival re-explores the entire region beyond it — a region that is identical every time, since what lies beyond a station does not depend on the route taken to it.",
+    "Name the waste: re-expanding stations that have already been reached, and re-exploring everything past them, including from route prefixes that are already slower than one already seen.",
+    "Because all times are positive, the unfinalized station with the smallest tentative arrival time can never be improved later, so it can be finalized on the spot. Repeatedly pull that station out of a priority queue and relax its links — this is Dijkstra's algorithm.",
+    "Keep a tentative time per station, all infinite except the source at zero, and a min-priority queue keyed on tentative time. Repeatedly pop the smallest; skip it if already finalized; otherwise finalize it and, for each outgoing link, improve the neighbour's tentative time and push the improved entry. The answer is the largest finalized time, or negative one if any station stays infinite. Why is it safe to finalize the smallest tentative time immediately, and where exactly does that argument use positivity?",
+    "Frame: up to 100 stations and 6,000 one-way links with positive times, plus a source; output is the maximum earliest arrival, or negative one. Differing link times are what rule out uniform-cost expansion. Brute: enumerate all routes; exponential, since a station is reached by exponentially many prefixes. Bottleneck: each arrival at a station re-expands it and re-explores the identical region beyond, including from prefixes already known to be slower. Lift: Dijkstra's algorithm. Invariant: when the unfinalized station with the smallest tentative time is popped, that time is already optimal. The argument is that any alternative route to it must leave the finalized set through some unfinalized station whose tentative time is at least as large, and then travel further along links of positive length, so it cannot arrive earlier. Positivity is exactly where that step is used — with a zero-length link the argument survives, but with a negative one it collapses and the algorithm becomes wrong. Implementation: tentative times all infinite except the source at zero, a min-priority queue keyed on tentative time, pop-skip-if-stale, finalize, relax outgoing links and push improved entries. Verify: one station gives zero, an unreachable station gives negative one, parallel links where only the faster matters, a self-link which never helps, and all-equal times where the answer coincides with a hop count. Time O(links log stations) with a binary heap; space O(stations plus links). With uniform times a plain queue suffices and the priority queue is pure overhead — that is the discriminator worth remembering."
+  ],
+  "distractors": [
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "'Time until every station is reached' is shortest-path phrasing and layer expansion is the reflex answer. Layers measure hop counts, which equal times only when every link takes the same time — and here they explicitly do not."
+    },
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "Exploring outward from the source recursively reaches every station and can compute arrival times. Without an ordering on which station to finalize next, it re-expands stations whenever a faster route turns up, which is the exponential behaviour being escaped."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Earliest arrival at each station' looks like a recurrence over stations, and on a network with no cycles it genuinely is one solved by processing in dependency order. Cycles are allowed here, so no ordering of the stations exists to sweep along."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a single station",
+    "a station unreachable from the source",
+    "two links between the same pair with different times",
+    "a link from a station to itself",
+    "all links with equal travel time",
+    "100 stations with 6,000 links",
+    "a source with no outgoing links"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "Up to 100 nodes are joined by up to 6,000 one-way links with positive, differing travel times. A signal starts at one node and reaches each node at the earliest time any route allows. Report when the last node receives it, or negative one if some node never does. Enumerating routes is hopeless. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A courier company has 100 depots and 6,000 one-way routes between them, each with its own known transit time; some pairs are joined by several routes of different speeds. A recall notice is released from one depot and propagates onward as soon as it arrives anywhere. Management wants the moment the final depot learns of it, or confirmation that some depot never will. Tracing every possible forwarding path is hopeless. What mechanism applies, and what waste does it remove?"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "problemId": "drop-digits-for-the-smallest-number",
+  "sourceRef": "https://leetcode.com/problems/remove-k-digits/",
+  "title": "Drop Digits For The Smallest Number",
+  "statement": "A non-negative whole number is given as a string of up to 100,000 digits with no leading zeros unless the number is exactly zero. Delete exactly k of its digits, where k is between zero and the number of digits, keeping the remaining digits in their original order. Among all ways to do this, report the smallest resulting number, written without leading zeros. If every digit is deleted, report zero.",
+  "primaryPattern": "monotonic_stack",
+  "secondary": [
+    "greedy"
+  ],
+  "redundancy": "refinding_next_greater",
+  "phase": 2,
+  "prerequisites": [
+    "arrays_basics",
+    "stack_basics",
+    "monotonic_stack",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a digit string of length up to 100,000 and a deletion count k. Output: the smallest number obtainable by deleting exactly k digits while preserving order. The number of deletion choices is astronomically large, so the answer must be built rather than searched for.",
+    "brute": "Delete one digit at a time: each round, scan the whole string for the deletion that yields the smallest result, and repeat k times. O(n) per scan times k rounds gives O(n*k), up to 1e10.",
+    "bottleneck": "Each round rescans the entire string for the first position where a digit is larger than the digit right after it, and the position it finds is almost always just after the position it found last round — so the same prefix is re-examined k separate times.",
+    "lift": "One left-to-right pass with a monotonic non-decreasing stack of kept digits: before appending a digit, pop any kept digit larger than it while deletions remain. Every deletion is decided as it becomes available, with no rescanning.",
+    "invariant": "The digits currently kept are non-decreasing except for the portion that can no longer be improved, and at every point the kept prefix is the smallest achievable prefix given the number of deletions spent so far.",
+    "verify": "k equal to zero; k equal to the length, giving zero; strictly increasing digits, where the deletions must come off the end; a leading digit that becomes zero after deletion; a string of all zeros after the first digit; 100,000 digits. Each digit is pushed once and popped at most once: O(n) time and O(n) space."
+  },
+  "hints": [
+    "State what determines whether one same-length digit string is smaller than another. That comparison rule, not the deletion count, is what drives the whole solution.",
+    "You have an approach that deletes one digit at a time, choosing the best single deletion each round. Describe how a round finds the digit to delete.",
+    "It scans the string looking for the first place where a digit is larger than the one right after it. The next round scans from the beginning again and finds a position barely different from the previous one.",
+    "The waste is re-searching from the start, every round, for the first position whose value exceeds its immediate successor — a search whose answer barely moves between rounds.",
+    "Build the answer left to right in a monotonic non-decreasing structure: keep digits in a stack, and when a new digit is smaller than the top, pop while you still have deletions to spend.",
+    "Walk the digits. For each one, while deletions remain and the last kept digit is larger than the current digit, drop the last kept digit and spend a deletion. Then keep the current digit. If deletions remain at the end, drop from the tail. Finally strip leading zeros, and if nothing is left report zero. Why must leftover deletions come off the tail rather than anywhere else?",
+    "Frame: a digit string up to 1e5 long and a deletion count k; output is the smallest number obtainable by deleting exactly k digits in order. Since the result's length is fixed at n minus k, comparing candidates is lexicographic, so an earlier smaller digit dominates everything after it. Brute: repeat k rounds, each scanning for the single best deletion; O(n*k), up to 1e10. Bottleneck: each round rescans from the start for the first position whose digit exceeds its successor, and that position barely moves between rounds, so the same prefix is re-examined k times. Lift: a monotonic non-decreasing stack of kept digits built in one pass — before keeping a digit, pop larger kept digits while deletions remain. Invariant: after processing each position, the kept sequence is the lexicographically smallest prefix achievable with the deletions spent so far. Any leftover deletions are taken from the tail, because the kept sequence is non-decreasing at that point and removing from the tail removes the largest digits. Verify: k of zero returns the input, k equal to the length returns zero, strictly increasing digits force tail deletions, a result with leading zeros must be stripped, and 1e5 digits. Each digit is pushed once and popped at most once: O(n) time, O(n) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "greedy",
+      "temptingBecause": "The rule 'drop a digit whenever it is bigger than the next one' is a local decision with an exchange argument behind it, so calling this greedy is defensible. It is a greedy policy that needs a structure to hold the retracted decisions, and that structure is the actual mechanism."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Choose which items to delete under a budget to optimize a result' is knapsack-shaped, with a state of position and deletions spent. It is correct and O(n times k), which is far too slow at these limits."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "'Among all ways to delete k digits' is enumeration vocabulary and reads as an instruction to search the space of deletions. That space has astronomically many members."
+    }
+  ],
+  "disguiseLevel": 3,
+  "misleadingFingerprint": "Nothing here mentions neighbours, next-greater elements, or bar heights; the framing is about deletion budgets, which points at knapsack DP, and the local rule points at greedy.",
+  "edgeCases": [
+    "k equal to zero",
+    "k equal to the number of digits",
+    "strictly increasing digits",
+    "a result that would begin with zeros",
+    "the single digit zero with k equal to zero",
+    "100,000 identical digits"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "A number is given as a string of up to 100,000 digits. Delete exactly k digits, keeping the rest in their original order, so that the resulting number is as small as possible; report it without leading zeros. Deleting one digit at a time by rescanning is too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A serial number of up to 100,000 digits is stamped on a part. A recall requires shortening it by exactly k characters by scratching out digits, with the surviving digits keeping their positions relative to one another. The manufacturer wants the shortened serial to be numerically as small as possible. Evaluating deletion choices one round at a time is far too slow at this length. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

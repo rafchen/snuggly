@@ -1,0 +1,69 @@
+{
+  "problemId": "split-text-into-symmetric-pieces",
+  "sourceRef": "https://leetcode.com/problems/palindrome-partitioning/",
+  "title": "Split The Text Into Symmetric Pieces",
+  "statement": "A lowercase string of up to 16 characters is given. Cut it into consecutive non-empty pieces so that every piece reads the same forwards and backwards, and report every distinct way of doing so, each as the ordered list of its pieces. Cuts may only be made between characters, so the pieces concatenate back to the original string in order. A single character is always symmetric, so at least one valid cutting always exists.",
+  "primaryPattern": "backtracking",
+  "secondary": [],
+  "redundancy": "reexploring_dead_branches",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "backtracking",
+    "pruning",
+    "string_ops"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a lowercase string of up to 16 characters. Output: every way of cutting it into symmetric consecutive pieces. There are two-to-the-fifteen possible cut patterns, so exponential output is expected; the question is how much invalid work is done alongside it.",
+    "brute": "Enumerate all two-to-the-n-minus-one cut patterns by choosing each gap independently, then for each complete pattern test whether every piece is symmetric, discarding those that fail. Every pattern is built in full before any test.",
+    "bottleneck": "It builds complete cut patterns before testing any piece, so once the very first piece is already not symmetric, all two-to-the-n-minus-two completions of that opening are still generated and tested — every one of them re-derives the same failure.",
+    "lift": "Cut left to right and test each piece the moment it is formed. A non-symmetric first piece then prunes every pattern beginning with that cut, in one step instead of exponentially many.",
+    "invariant": "At each recursive call, the pieces produced so far are all symmetric and together cover a prefix of the string exactly; therefore any arrangement discarded by the pruning test was already invalid.",
+    "verify": "A one-character string, giving one cutting; a string of identical characters, which produces the maximum count; a string with no symmetric piece longer than one, giving exactly one cutting; a fully symmetric string; 16 characters. Each node costs a symmetry test, which is linear in the piece length, or constant with a precomputed table."
+  },
+  "hints": [
+    "The string is at most 16 characters. Count the possible cut patterns at that length and say what magnitude of work is unavoidable, then say what part of the work is avoidable.",
+    "You have an approach that enumerates cut patterns and then validates them. Say when the validation happens relative to the construction.",
+    "Validation happens only once a pattern is complete. So a pattern whose very first piece is already not symmetric still has every one of its thousands of completions built and validated.",
+    "Name the waste: continuing to expand branches whose failure is already decided by a piece produced at the top of the branch.",
+    "Move the test to the moment each piece is formed, so a failure kills the entire subtree at once. That is backtracking with pruning: cut left to right, test the piece immediately, recurse only when it passes, and undo the piece on the way out.",
+    "Recurse on the index where the next piece begins. For each possible end of that piece, test whether the substring is symmetric; if it is, append it, recurse from just past it, then remove it. Record a cutting when the index reaches the end of the string. Why is the removal step necessary even though the recursion has already returned?",
+    "Frame: a lowercase string of up to 16 characters; output is every cutting into symmetric consecutive pieces, so exponential output is expected. Brute: enumerate all two-to-the-n-minus-one cut patterns and validate each complete pattern; every pattern is built before any test. Bottleneck: a doomed opening piece is re-confirmed as doomed once per completion of that opening, so a single bad first cut costs exponentially many wasted validations. Lift: backtracking with pruning — cut left to right and test each piece the instant it is formed, so an invalid piece prunes its entire subtree in one step. Invariant: at every recursive call the pieces produced so far are symmetric and exactly cover a prefix of the string, so pruning never discards a valid arrangement. The undo after the recursive call is what makes the shared working list correct for the next sibling branch; without it, pieces from one branch leak into the next, which is the defining bug of this pattern and the reason it is backtracking rather than plain traversal. Verify: one character gives one cutting, a string of identical characters gives the maximum count of two-to-the-n-minus-one, a string with no symmetric piece longer than one gives exactly one cutting, and a fully symmetric string gives the most branching. Precomputing a table of which substrings are symmetric, in O(n squared), makes each test constant and is the standard refinement. Space is O(n) beyond the output."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "'Palindrome' plus 'partition' is interval-DP vocabulary, and the related problem of finding the minimum number of cuts genuinely is a DP. Here every arrangement must be emitted, so the answers cannot be collapsed into a table of counts or minima."
+    },
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "The recursion walks a tree of cut decisions, so the family is right. The distinguishing feature is the removal of the appended piece on the way out, which exists because candidate solutions are being assembled rather than nodes visited."
+    },
+    {
+      "mechanism": "two_pointers_opposite",
+      "temptingBecause": "Testing whether a piece reads the same in both directions really is a converging-index check, and that check appears inside the solution. It is a subroutine, not the mechanism that organizes the search."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "'Palindrome' and 'partition' together are two of the strongest DP keywords in the vocabulary, and the small n reinforces it; the requirement to emit every arrangement is what actually rules DP out.",
+  "edgeCases": [
+    "a single character",
+    "a string of 16 identical characters",
+    "a string whose only symmetric pieces are single characters",
+    "a fully symmetric string",
+    "a two-character string with equal characters",
+    "a two-character string with different characters"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Given a lowercase string of up to 16 characters, report every way of cutting it into consecutive non-empty pieces such that each piece reads the same forwards and backwards. Enumerating all cut patterns and validating them afterwards is far too slow. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A ribbon of 16 coloured beads must be cut into consecutive segments for resale, and a segment sells only if its colour sequence is identical read from either end. Cuts happen between beads and every bead must end up in exactly one segment. The seller wants a catalogue of every valid way to cut the ribbon. Generating all cut patterns and checking them afterwards is hopeless. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

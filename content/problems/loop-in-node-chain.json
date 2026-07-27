@@ -1,0 +1,64 @@
+{
+  "problemId": "loop-in-node-chain",
+  "sourceRef": "https://leetcode.com/problems/linked-list-cycle/",
+  "title": "Does The Chain Loop Back",
+  "statement": "A chain of up to 100,000 nodes is given by its first node. Each node holds a value and exactly one link, pointing either at another node or at nothing. If some link points back at a node already passed, following links from the start never terminates. Report whether such a loop exists. You may not modify the chain, and you cannot identify nodes by their stored value — two different nodes may hold the same value.",
+  "primaryPattern": "hashing",
+  "secondary": [
+    "two_pointers_fast_slow",
+    "linked_list"
+  ],
+  "redundancy": "reseeking_membership",
+  "phase": 2,
+  "prerequisites": [
+    "hashing",
+    "linked_list"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: the head of a chain of up to 100,000 singly linked nodes, values not usable as identity. Output: a boolean. Read-only, so no marking nodes as you pass.",
+    "brute": "For each node reached, walk from the head again and count how many nodes you pass before reaching the current one; if you can reach it twice by two different walk lengths, or more simply if the walk from head reaches the current node before the current step count, there is a loop. O(n^2).",
+    "bottleneck": "Each newly reached node triggers a fresh walk from the head to ask whether that node was visited before, so the same prefix of the chain is re-walked once for every node in the chain.",
+    "lift": "A hash set of node identities makes 'have I stood on this node already' a constant-time question, so one forward pass suffices: insert each node, and report a loop the moment an insert finds the node already present.",
+    "invariant": "After stepping onto the k-th node, the set holds exactly the identities of the first k nodes reached; therefore the first repeat encountered is the first node revisited by the traversal, which exists if and only if the chain loops.",
+    "verify": "Empty chain and single node with no link both report no loop; a single node linking to itself reports a loop; a chain of 100,000 nodes with the last linking to the first; a chain with two nodes holding equal values but no loop, which is exactly what value-based identity gets wrong."
+  },
+  "hints": [
+    "Two constraints do real work here: the chain reaches 100,000 nodes and you may not write to it. What does the read-only restriction take away from you?",
+    "The naive check terminates only if you can tell a repeat visit from a first visit. How is your current approach making that distinction, and what does it cost each time?",
+    "Every time you land on a node you re-walk the chain from the head to see whether you have been here before. That re-walk lengthens as you progress, and it covers ground you have already covered on the previous check.",
+    "The repeated operation is a membership query — 'is this node one I have already stood on' — answered by scanning the traversed portion from the beginning, once per step.",
+    "Answer that membership query in constant time instead: keep a hash set keyed on node identity, not node value, and consult it as you walk.",
+    "Walk forward once. At each node, if inserting it into the set finds it already present, the chain loops; if you reach a null link, it does not. Then ask the follow-up the interviewer will ask: how would you do this in constant extra space?",
+    "Frame: head of a chain up to 1e5 nodes, read-only, values are not identities, output is a boolean. Brute: for each reached node, re-walk from the head to detect a repeat; O(n^2). Bottleneck: the same prefix of the chain is re-walked once per node, and each of those walks answers only one membership question. Lift: a hash set of node identities makes that question O(1), so one forward pass with one insert per node decides it. Invariant: after k steps the set holds exactly the first k nodes reached, so the first collision is the first genuine revisit. Verify: empty chain and lone node give false, a self-link gives true, a 1e5 chain whose tail links to the head gives true, and two distinct nodes sharing a value must still give false — that case is what kills value-keyed sets. Cost is O(n) time and O(n) space. The classic refinement drops space to O(1) by advancing one walker a step at a time and another two at a time; they meet inside a loop and never meet without one, which is the same detection with the set traded away for arithmetic."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "'Detect a cycle' is graph vocabulary, and depth-first search with node colouring is the standard cycle detector for graphs. A chain is a degenerate graph, so the machinery fits — it is just heavier than a linear structure with one outgoing edge needs."
+    },
+    {
+      "mechanism": "union_find",
+      "temptingBecause": "Merging the endpoints of each edge and declaring a cycle when both ends already share a group is the union-find cycle test, and it is correct for undirected edge lists. Here you have no edge list, only a head pointer, so you would have to traverse anyway."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "'Detect a cycle' points three different mechanisms at this problem at once, and the read-only clause is the only signal that the cheap trick of marking nodes is unavailable.",
+  "edgeCases": [
+    "empty chain",
+    "single node with no link",
+    "single node linking to itself",
+    "loop entered only at the final node of a 100,000-node chain",
+    "no loop but several nodes holding identical values",
+    "the entire chain is one loop with no tail"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "You are given the first node of a singly linked chain of up to 100,000 nodes. Determine whether following links from the head ever revisits a node. The chain is read-only and node values are not unique, so two nodes can look identical while being distinct. Name the mechanism that turns this into one pass, and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A file system stores 100,000 shortcut entries; each shortcut points to exactly one other entry or to nothing. Starting from one entry and following shortcuts, a user's tool sometimes hangs forever. Decide whether the tool will hang from a given starting entry. The file system is mounted read-only so you cannot annotate entries, and two entries may share a display name, so names are not identities. What mechanism applies and what repeated work does it eliminate?"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "problemId": "count-separate-landmasses",
+  "sourceRef": "https://leetcode.com/problems/number-of-islands/",
+  "title": "Count The Separate Landmasses",
+  "statement": "A grid of up to 300 by 300 cells is given, each cell either land or water. A landmass is a maximal group of land cells connected through shared sides; cells touching only at a corner are not connected. The grid is surrounded by water on all sides. Report how many separate landmasses the grid contains. A grid with no land at all contains zero landmasses.",
+  "primaryPattern": "dfs",
+  "secondary": [],
+  "redundancy": "retraversing_visited_regions",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "dfs_traversal",
+    "flood_fill"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a grid of up to 300 by 300 cells, so at most 90,000 cells, with four-way connectivity. Output: a count of maximal connected land groups. The grid is static and the count is needed once.",
+    "brute": "For each land cell, explore everything reachable from it and record the set of cells in that group; then compare the recorded groups and count the distinct ones. Every cell launches a full exploration, so O(cells squared).",
+    "bottleneck": "A landmass of 500 cells is fully traversed once from each of its 500 cells, re-walking the identical region each time, and the resulting groups are then compared against one another to discover that they were the same region all along.",
+    "lift": "Mark cells as seen the first time they are reached and never re-enter them. Then one exploration per unseen land cell visits each cell exactly once in total, and the number of explorations launched is exactly the number of landmasses.",
+    "invariant": "Every cell is marked at most once, and a marked cell is always part of a landmass already counted; therefore an exploration is launched exactly once per landmass.",
+    "verify": "A grid with no land; a grid that is entirely land, giving one; a single cell; land cells touching only at corners, which must count separately; a 300 by 300 checkerboard, which produces the maximum number of landmasses; a spiral landmass that forces deep recursion."
+  },
+  "hints": [
+    "Two rules define the answer: what makes two cells part of the same landmass, and what does not. State both, and note the grid can hold ninety thousand cells.",
+    "You have an approach that explores from land cells and collects groups. Take a landmass of five hundred cells and describe what your approach does across those five hundred cells.",
+    "It explores the whole landmass from each of its cells, re-walking the same five hundred cells five hundred times, and then compares the collected groups to notice they were identical.",
+    "Name the waste: re-traversing regions that have already been traversed, because nothing records that a cell was already accounted for.",
+    "Mark cells as you reach them and refuse to re-enter a marked cell. Then a depth-first search launched from each still-unmarked land cell consumes exactly one landmass, and counting the launches counts the landmasses.",
+    "Sweep the grid. When you meet an unmarked land cell, increment the count and run a depth-first search from it, marking every land cell reachable through shared sides. Continue the sweep. Why does the count equal the number of launches, and what would go wrong if you marked a cell when you popped it rather than when you first reached it?",
+    "Frame: a grid of up to 300 by 300 cells with four-way connectivity; output is the number of maximal connected land groups, needed once over a static grid. Brute: explore from every land cell and compare the collected groups; O(cells squared). Bottleneck: a landmass of k cells is fully traversed once from each of its k cells, re-walking the identical region, and the identical groups are then compared to discover they are the same. Lift: a visited mark. Marking a cell the first time it is reached makes every later arrival a no-op, so across the whole run each cell is entered once. Invariant: every marked cell already belongs to a counted landmass, so an exploration is launched exactly once per landmass and the launch count is the answer. Marking at first reach rather than at pop is what keeps a cell from being pushed many times by its several neighbours. Verify: no land gives zero, all land gives one, a single cell, corner-touching cells counted separately, and a 300 by 300 checkerboard giving the maximum count. Time and space are O(cells). Recursion can reach 90,000 frames on a spiral, so an explicit stack or an iterative sweep is the safe implementation. The same problem is solvable by grouping under merges, which is the right choice instead when land cells arrive over time."
+  ],
+  "distractors": [
+    {
+      "mechanism": "bfs",
+      "temptingBecause": "Layer-by-layer expansion counts the same landmasses correctly and is often written instead. Distance plays no role here, so the level structure buys nothing — the discriminator is whether distance matters, and it does not."
+    },
+    {
+      "mechanism": "union_find",
+      "temptingBecause": "'Count the connected groups' is grouping-under-merges vocabulary and this is a classic use for it. The graph is static and counted once, which is exactly the case where a plain traversal is simpler and faster."
+    },
+    {
+      "mechanism": "backtracking",
+      "temptingBecause": "Exploring a grid recursively looks like the enumeration shape, especially with the marking and unmarking pattern in mind. Nothing is being enumerated and marks are never undone — undoing them would restore the exponential cost."
+    }
+  ],
+  "disguiseLevel": 0,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a grid with no land",
+    "a grid that is entirely land",
+    "a single cell",
+    "land cells touching only at corners",
+    "a 300 by 300 checkerboard of land and water",
+    "a single spiral landmass filling the grid",
+    "a one-row grid"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 0,
+      "statement": "A grid of up to 300 by 300 cells holds land and water. Land cells sharing a side belong to the same landmass; corner contact does not connect them. Count the landmasses. Exploring from every land cell separately is too slow. Name the mechanism and the specific repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 2,
+      "statement": "A microscope image is digitized into a 300 by 300 grid of pixels, each either stained or blank. A colony is a maximal group of stained pixels connected through shared edges; diagonal contact does not join two colonies. A technician needs the colony count for one image. Re-tracing each colony from every one of its pixels is far too slow. What mechanism applies, and what wasted work does it eliminate?"
+    }
+  ]
+}

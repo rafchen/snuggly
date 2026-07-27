@@ -1,0 +1,68 @@
+{
+  "problemId": "shortest-route-through-open-cells",
+  "sourceRef": "https://leetcode.com/problems/shortest-path-in-binary-matrix/",
+  "title": "Shortest Route Through Open Cells",
+  "statement": "A square grid of up to 100 by 100 cells is given; each cell is open or blocked. A route starts at the top-left cell, ends at the bottom-right cell, and moves between cells that touch on a side or a corner, so up to eight neighbours per step. Every cell on the route must be open, including both endpoints. Report the number of cells on the shortest such route, counting both endpoints, or negative one if no route exists. All steps cost the same regardless of direction.",
+  "primaryPattern": "bfs",
+  "secondary": [],
+  "redundancy": "reexpanding_equal_cost_frontier",
+  "phase": 3,
+  "prerequisites": [
+    "arrays_basics",
+    "tree_basics",
+    "bfs_levels",
+    "shortest_path_unweighted"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: a grid of up to 100 by 100 cells, so at most 10,000 cells, with eight-way movement and uniform step cost. Output: a route length in cells, or negative one. Uniform cost is the decisive property.",
+    "brute": "Explore routes recursively from the start, trying all eight directions at each cell and keeping the shortest complete route found. Exponential, since the same cell is reached by exponentially many routes.",
+    "bottleneck": "The same cell is expanded again and again, once for each distinct route that reaches it, and every one of those expansions re-explores the identical region beyond that cell — a cell in the middle of the grid is re-entered from every route prefix that can reach it.",
+    "lift": "Because every step costs the same, the first time a cell is reached is along a shortest route to it, so it never needs to be reached again. Expand the frontier one distance layer at a time and mark cells as reached the moment they enter the frontier.",
+    "invariant": "When a cell is first placed on the frontier, its recorded distance is the true minimum number of cells on a route to it; the frontier is always processed in non-decreasing distance order.",
+    "verify": "A one-by-one grid, open or blocked; a blocked start or a blocked destination, giving negative one; a fully open grid, where the answer is the grid side length thanks to diagonal movement; a fully blocked interior; a 100 by 100 grid. Each cell enters the frontier at most once, so O(cells) time and space."
+  },
+  "hints": [
+    "Two facts about movement matter more than the grid size: how many neighbours a cell has, and what each step costs. State both, and say which one constrains the algorithm.",
+    "You have a recursive exploration that finds the answer. Take a cell in the middle of the grid and count how many times your exploration arrives at it.",
+    "It arrives once for every distinct route prefix that can reach it, and each arrival re-explores the entire region beyond that cell, which is identical every time.",
+    "Name the waste: re-expanding cells that have already been reached, and re-exploring the region beyond them, when the region beyond does not depend on how you got there.",
+    "Since every step costs the same, the first arrival at a cell is already along a shortest route. Expand outward one distance layer at a time using a queue — that is breadth-first search — and mark each cell reached as it enters the queue.",
+    "Push the start with distance one, mark it reached, and repeatedly pop a cell and push every open, unreached neighbour among the eight with distance one greater, marking it reached at push time. Stop when the destination is popped or the queue empties. Why must a cell be marked when it is pushed rather than when it is popped?",
+    "Frame: a grid of up to 100 by 100 cells with eight-way movement and uniform step cost; output is the shortest route length in cells or negative one. Uniform cost is the property that selects the mechanism. Brute: recursive exploration of all routes; exponential, because a cell is reached by exponentially many route prefixes. Bottleneck: the same cell is expanded once per arriving prefix, and each expansion re-explores the identical region beyond it — the region beyond a cell does not depend on the route taken to reach it. Lift: breadth-first search. With uniform step costs, the first arrival at a cell is along a shortest route, so a visited mark makes every later arrival discardable. Invariant: cells leave the queue in non-decreasing distance order, and a cell's recorded distance when first enqueued is its true minimum. Marking must happen at push time, not pop time: otherwise the same cell can be pushed many times before it is first popped, and the queue grows quadratically even though the answer stays correct. Verify: a one-by-one grid open gives 1 and blocked gives negative one, a blocked start or destination gives negative one, a fully open grid gives the side length because diagonal steps are allowed, and a fully blocked interior gives negative one. Each cell enters the queue at most once, so O(cells) time and O(cells) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "dfs",
+      "temptingBecause": "Grid traversal is depth-first search's most familiar setting and the code is shorter. Depth-first exploration finds a route but not the shortest one, and repairing it to find the shortest costs the exponential blowup back."
+    },
+    {
+      "mechanism": "dijkstra",
+      "temptingBecause": "'Shortest path' is Dijkstra's headline phrase and it produces the right answer here. Every step costs the same, so the priority queue degenerates to a plain queue and buys only a log factor of overhead."
+    },
+    {
+      "mechanism": "dynamic_programming",
+      "temptingBecause": "Grid problems asking for a minimum are usually grid DP, and the state 'shortest route to this cell' is natural. Movement here is not restricted to one direction, so the cells have no ordering along which a DP sweep could run."
+    }
+  ],
+  "disguiseLevel": 1,
+  "misleadingFingerprint": null,
+  "edgeCases": [
+    "a one-by-one grid that is open",
+    "a one-by-one grid that is blocked",
+    "a blocked starting cell",
+    "a blocked destination cell",
+    "a fully open grid",
+    "a grid with no route at all",
+    "a 100 by 100 grid with a single winding corridor"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 1,
+      "statement": "A grid of up to 100 by 100 cells has open and blocked cells. Moving between cells that share a side or a corner, find the fewest cells on a route from the top-left to the bottom-right passing only through open cells, or report that none exists. All steps cost the same. Name the mechanism and the repeated operation it eliminates."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A warehouse robot navigates a 100 by 100 floor plan in which some squares hold pallets and cannot be entered. The robot can roll to any of the eight adjoining squares in one move, and every move takes the same time. It must get from the loading dock in one corner to the shipping bay in the opposite corner. Report the fewest squares it will occupy along the way, endpoints included, or that the trip is impossible. What mechanism applies, and what wasted work does it remove?"
+    }
+  ]
+}

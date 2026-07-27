@@ -1,0 +1,69 @@
+{
+  "problemId": "shortest-covering-stretch",
+  "sourceRef": "https://leetcode.com/problems/minimum-window-substring/",
+  "title": "Shortest Stretch Covering A Requirement",
+  "statement": "You are given a text of up to 100,000 characters and a requirement string of up to 100 characters, both over a mixed alphabet. A stretch of the text covers the requirement when it contains at least as many copies of every character as the requirement asks for; extra characters are allowed and order is irrelevant. Report the shortest covering stretch, or the empty string when none exists. If two stretches tie in length, either may be reported. Multiplicity matters: a requirement asking for two of a character is not covered by a stretch containing one.",
+  "primaryPattern": "sliding_window_variable",
+  "secondary": [
+    "hashing"
+  ],
+  "redundancy": "resumming_overlapping_range",
+  "phase": 1,
+  "prerequisites": [
+    "arrays_basics",
+    "sliding_window_fixed",
+    "hashing",
+    "sliding_window_variable"
+  ],
+  "canonicalLadder": {
+    "frame": "Input: text up to 1e5 characters, requirement up to 100 characters, multiplicities count. Output: the shortest covering contiguous stretch, or empty. 1e5 means each character can be touched only a constant number of times.",
+    "brute": "For every start position, extend the end rightward until the stretch covers the requirement, then record its length. Tallying each candidate independently costs O(n^2) or worse.",
+    "bottleneck": "Each new start position re-tallies the characters of a stretch that overlaps the previous stretch in all but one position, so the same character's contribution to the coverage count is recomputed once per start position that contains it.",
+    "lift": "A variable-width sliding window with a deficit counter: grow the right edge until the requirement is met, then shrink the left edge as far as coverage survives, recording the width at each moment coverage holds.",
+    "invariant": "The window always ends at the current right edge, and its left edge is the furthest right position for which the window still covers the requirement — so any shorter stretch ending here fails to cover.",
+    "verify": "Requirement longer than the text; requirement with a repeated character where a single copy is insufficient; text equal to the requirement; no covering stretch at all; a requirement of one character; text of 100,000 identical characters. Each edge only advances, so O(n + m) time and O(alphabet) space."
+  },
+  "hints": [
+    "Two sizes are given separately: 100,000 for the text and 100 for the requirement. Which one bounds the number of candidate answers, and which one bounds the cost of checking one?",
+    "You can already produce the correct answer by trying each start. Describe what the check at a given start does, and what happens to that work when the start moves by one.",
+    "Moving the start one position right changes the stretch by a single character, yet your check retallies every character in it. The character at the far end of the stretch is counted again for every start position to its left.",
+    "The repeated operation is recomputing a coverage tally over a range that overlaps the previous range in all but one position.",
+    "This is the variable-width sliding window, and the only real design decision is what single number tells you, in constant time, whether the current window covers the requirement.",
+    "Tally the requirement. Maintain a window tally and a count of how many distinct required characters are currently satisfied at full multiplicity. Grow the right edge until that count equals the number of distinct required characters, then shrink the left edge while coverage survives, recording the best width each time coverage holds. Why is it correct to shrink greedily rather than trying every left edge?",
+    "Frame: text up to 1e5, requirement up to 100, multiplicities matter, output is the shortest covering contiguous stretch. Brute: for each start, extend until covered and record; re-tallying per candidate is O(n^2) or worse. Bottleneck: adjacent starts differ by one character but the tally is rebuilt, so each character's contribution is recomputed once per start to its left. Lift: a variable-width sliding window carrying a per-character tally plus a scalar 'number of required characters currently satisfied'. Grow the right edge, updating the scalar only when a character's count crosses its requirement; once the scalar hits the number of distinct required characters, shrink the left edge while coverage survives, updating the best answer. Invariant: after each shrink phase, the left edge is the rightmost position for which the window ending here still covers, so no shorter covering stretch ends at this right edge — which is exactly why greedy shrinking loses nothing. Verify: requirement longer than the text gives empty, a doubled required character rejects single-copy windows, text equal to requirement returns the whole text, no covering stretch returns empty, and 1e5 identical characters. Each edge advances monotonically, so every character is added once and removed at most once: O(n + m) time, O(alphabet) space."
+  ],
+  "distractors": [
+    {
+      "mechanism": "sliding_window_fixed",
+      "temptingBecause": "The requirement string has a definite length, which makes it feel like the answer's width is known in advance. It is not — extra characters are permitted, so covering stretches can be far longer than the requirement."
+    },
+    {
+      "mechanism": "hashing",
+      "temptingBecause": "The coverage test is entirely about character counts, so a frequency map feels like the whole answer. Counting is a component here, not the mechanism: without a moving window you still re-count once per candidate."
+    },
+    {
+      "mechanism": "binary_search_answer",
+      "temptingBecause": "'Shortest stretch such that a predicate holds' is the classic monotone-feasibility phrasing, and coverage really is monotone in width. It would work at an extra log factor, which is strictly worse than the linear scan available."
+    }
+  ],
+  "disguiseLevel": 2,
+  "misleadingFingerprint": "The requirement string's fixed length reads as a fixed window width, and the 'shortest such that' phrasing reads as binary search on the answer. Neither is what the problem needs.",
+  "edgeCases": [
+    "requirement longer than the text",
+    "requirement containing a character twice where the text has only one",
+    "text identical to the requirement",
+    "no covering stretch exists",
+    "single-character requirement",
+    "100,000 identical characters with a one-character requirement"
+  ],
+  "drillVariants": [
+    {
+      "disguiseLevel": 2,
+      "statement": "Given a text of up to 100,000 characters and a requirement of up to 100 characters, find the shortest contiguous stretch of the text that contains every required character at least as many times as required. Extra characters are fine and order is irrelevant. Return the empty string if no stretch qualifies. Name the mechanism and the repeated operation it removes."
+    },
+    {
+      "disguiseLevel": 3,
+      "statement": "A conveyor delivers 100,000 components in a fixed order. A repair kit needs a specific bill of materials — for instance two bolts, one washer, three clips. A technician can only take a contiguous run off the conveyor and may keep surplus parts. Find the shortest run that satisfies the bill of materials, or report that none does. Checking every possible run separately is far too slow. What mechanism, and what wasted work does it eliminate?"
+    }
+  ]
+}
