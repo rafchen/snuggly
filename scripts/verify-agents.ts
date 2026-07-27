@@ -81,7 +81,7 @@ async function main() {
     const res = await gradeSweepItem(
       { store },
       placement,
-      { problemId: p.problemId, phase: p.phase },
+      { problemId: p.problemId, phase: p.phase, statement: p.statement },
       {
         mechanism: p.primaryPattern,
         redundancy: 'it keeps redoing the same scan over ranges that overlap',
@@ -158,18 +158,22 @@ async function main() {
 
   const exam = await openExam(
     { store },
-    { problemId: problem.problemId, mechanism: problem.primaryPattern, approach: 'monotonic increasing stack of indices' },
+    {
+      problemId: problem.problemId,
+      mechanism: problem.primaryPattern,
+      solutionSketch: 'monotonic increasing stack of indices; on pop the popped bar is bounded by the current index',
+    },
   )
-  console.log(`    examiner opened with ${exam.probes.length} probe(s): "${exam.probes[0]?.q ?? ''}"`)
+  console.log(`    examiner opened with ${exam.probes.length} probe(s): "${exam.probes[0] ?? ''}"`)
   const probed = await answerProbe({ store }, exam, 0, 'It works because it finds the largest rectangle.')
-  console.log(`    circular answer flagged: ${probed.circularReasoning}`)
+  console.log(`    circular answer flagged: ${probed.grade.circular}`)
   check('examiner produces targeted probes', exam.probes.length > 0)
-  check('examiner rejects a circular argument', probed.circularReasoning === true)
+  check('examiner rejects a circular argument', probed.grade.circular === true)
 
   const verdict = await judgeIdea({ store }, { problem, approach: 'sort the bars and take the tallest' })
-  console.log(`    critic idea verdict: correct=${verdict.correct} — ${verdict.reason ?? ''}`)
-  check('critic judges the idea before the code', typeof verdict.correct === 'boolean')
-  check('critic rejects a wrong approach', verdict.correct === false)
+  console.log(`    critic idea verdict: idea_correct=${verdict.idea_correct} — ${verdict.verdict}`)
+  check('critic judges the idea before the code', typeof verdict.idea_correct === 'boolean')
+  check('critic rejects a wrong approach', verdict.idea_correct === false)
 
   const review = await critique(
     { store },
@@ -181,20 +185,38 @@ async function main() {
       lookups: [],
     },
   )
-  console.log(`    critic outcome kind: ${review.kind}`)
-  check('critic returns a structured outcome', typeof review.kind === 'string')
+  console.log(`    critic idea_correct=${review.result.ideaCorrect} passes=${review.result.passes} bugs=${review.result.bugs.length}`)
+  console.log(`    critic message: ${review.message}`)
+  check('critic returns a structured review', typeof review.result.ideaCorrect === 'boolean')
+  check('critic says which kind of failure it is', review.message.length > 0)
 
-  const interview = await startInterview({ store }, { learnerId: LEARNER, problem })
-  console.log(`    interview opened; ambiguities left unstated: ${interview.ambiguities.length}`)
-  check('interview underspecifies deliberately', interview.ambiguities.length >= 2)
-  const turned = await injectWrongTurn({ store }, interview)
-  console.log(`    wrong turn: ${turned.followUp}`)
-  check('interview induces exactly one wrong turn', typeof turned.followUp === 'string' && turned.followUp.length > 0)
-  const result = await debrief({ store }, turned, {
-    solved: true,
-    timeToWorkingSec: 1980,
-    transcript: 'Candidate started coding immediately without asking about input bounds, went quiet for 90 seconds after the follow-up, then recovered and finished.',
+  const interview = await startInterview(
+    { store },
+    { problemId: problem.problemId, phase: 5, disguiseLevel: 3 },
+  )
+  console.log(`    interview opened; ambiguities left unstated: ${interview.problem.ambiguities.length}`)
+  check('interview underspecifies deliberately', interview.problem.ambiguities.length >= 2)
+
+  const turned = await injectWrongTurn({ store }, interview, {
+    elapsedSec: 1200,
+    currentApproach: 'monotonic stack over the array, mutating it in place as I go',
   })
+  console.log(`    wrong turn: ${turned.prompt}`)
+  check('interview induces exactly one wrong turn', turned.prompt.length > 0)
+
+  const { result } = await debrief(
+    { store },
+    {
+      state: turned.state,
+      submission: {
+        code: 'def f(h):\n    st=[];best=0\n    return best',
+        approach: 'monotonic increasing stack',
+        timeToWorkingSec: 1980,
+      },
+      transcript:
+        'Candidate started coding immediately without asking about input bounds. After the follow-up they went quiet for 90 seconds, then recovered and finished.',
+    },
+  )
   console.log(`    verdict: ${result.verdict}`)
   console.log(`    highest-cost behavior: ${result.highestCostBehavior}`)
   console.log(`    communication: ${JSON.stringify(result.communication)}`)
