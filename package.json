@@ -14,7 +14,7 @@
     "db:reset": "prisma db push --force-reset && npm run db:seed"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.68.0",
+    "@anthropic-ai/sdk": "^0.115.0",
     "@prisma/client": "^6.2.1",
     "next": "^15.1.6",
     "react": "^19.0.0",
