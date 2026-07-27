@@ -206,6 +206,14 @@ export async function finishPlacement(
       `implementation only — articulation is not yours to initialize.`,
       `Notes: bank the explanations for the missed items here, not mid-sweep.`,
       `Banked: ${state.banked.join(' | ') || '(none)'}`,
+      ``,
+      `first_session_plan is REQUIRED and must not be empty. One or two sentences`,
+      `naming what the first two weeks target and what, if anything, runs`,
+      `alongside rather than gating. Example shape: "Phase 0 syntax reps (heapq,`,
+      `sort keys) alongside Phase 2 recognition work — do not gate Phase 2 on the`,
+      `syntax."`,
+      `profile is REQUIRED: name the shape in a few words, e.g.`,
+      `"recognition_ahead_of_implementation".`,
     ].join('\n'),
   })
 
